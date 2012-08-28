@@ -1,5 +1,8 @@
 #include "bbr.h"
 
+namespace salb
+{
+
 static   int      *cycle_times;  // work vector used by sim_anneal
 static   int      *cycle_times2; // work vector used by sim_anneal
 static   int      *best_stations;// work vector used by sim_anneal
@@ -411,3 +414,7 @@ int check_assignment(int *stations, int n_stations, int max_cycle_time)
  
    return(1);
 }
+
+}; // end namespace salb
+
+

@@ -5,6 +5,9 @@
 #include  <math.h>
 #include  <memory.h>
 
+namespace salb
+{
+
 #define  MALLOC(x,n,type) do {                                         \
          if ((x = (type *) malloc( (n) * sizeof(type))) == NULL) {     \
 	         fprintf(stderr,"out of memory\n");                         \
@@ -22,12 +25,12 @@
 #define  MAX_N_TASKS 500
 #define  BIG_INT 2147483647
 //#define  STATE_SPACE  4000000 /* allocate space for this many states  */
-#define  STATE_SPACE  7000000 /* allocate space for this many states  */
+#define  STATE_SPACE  70000000 /* allocate space for this many states  */
 //#define  HASH_SIZE 1019
-#define  HASH_SIZE 40000003 // Must be a prime number.  Currently using linear
+#define  HASH_SIZE 900000011 // Must be a prime number.  Currently using linear
                             // probing, but if quadratic probing is used, then
                             // it must be a prime of the form 4j+3.  20000003=4*5000000+3   40000003=4*10000000+3
-#define  HEAP_SIZE 300000   // Maximum number of elements in a heap.
+#define  HEAP_SIZE 30000000   // Maximum number of elements in a heap.
 #define  CPU_LIMIT 3600
 
 
@@ -54,7 +57,7 @@ typedef struct state {
    char  n_stations;    // The total number of work stations that have been used so far
    char  LB;            // The best lower bound computed for this state.
    int   idle;          // The total idle time for this state = cycle*n_stations - sum(i: degree[i]=-1) t[i]
-   int   hash_value;    // The hash value of the jobs that have been assigned to a workstation
+   long hash_value;    // The hash value of the jobs that have been assigned to a workstation
    int   previous;      // Previous state.  Used in backtracking to constuct optimal solution
    char  open;          // = 1 if this state has not been explored yet.
 } state, *statepnt;
@@ -69,7 +72,7 @@ typedef struct heap_record {
 } heap_record, *heap_recordpnt;
 
 typedef struct problem {
-   char  *file_name;
+   const char  *file_name;
    int   cycle_times[28];
    int   upper_bounds[28];
 } problem, *problempnt;
@@ -98,7 +101,7 @@ typedef struct open_bin {
 extern   searchinfo search_info;
 extern   int      first_state;            // index (in states) where first unexplored is stored
 extern   int      last_state;             // index (in states) last  state is stored
-extern   state    states[STATE_SPACE+1];  // Stores states
+extern   state*   states;				  // Stores states
 extern   heap_record **dbfs_heaps;
 extern   heap_record *bfs_heap;
 extern   int      cycle;                  // Cycle time for the stations
@@ -113,7 +116,7 @@ extern   int      *t;                     // t[i] = processing time of task i
 extern   int      *n_successors;          // n_successors[i] = number of successors of i in closed graph.
 extern   int      *n_predecessors;        // n_predecessors[i] = number of predecessors of i in closed graph.
 extern   int      *positional_weight;     // positional_weight[i] = t[i] + sum(t[j]: j is a successor of i).
-extern   int      *hash_values;           // hash_values(j) = hash value assigned to task j.
+extern   long *hash_values;           // hash_values(j) = hash value assigned to task j.
 extern   double   *LB2_values;            // LB2_values[j] = the value assigned to task j to use in computing LB2.
 extern   double   *LB3_values;            // LB3_values[j] = the value assigned to task j to use in computing LB3.
 extern   int      *descending_order;      // descending_order[k] = the task with the kth largest processing time. 
@@ -124,7 +127,7 @@ extern   problem  problems[31];           // Cycle times and upper bounds for be
 extern   char     *prob_file;             // problem file
 extern   float    alpha;
 extern   float    beta;
-extern   float    gamma;
+extern   float    gimmel;
 extern   int      bin_pack_flag;
 extern   int      bin_pack_lb; // -b option: 1 = use bin packing LB, 0 = do not use
 extern   int      search_strategy;  /* -m option: search_strategy during Phase II                       
@@ -138,7 +141,7 @@ extern   double   seed;        // -s option: seed for random number generation
 
 void parseargs(int ac, char **av);
 void usage (char *prog);
-void benchmarks();
+void benchmarks(const char* filename);
 void testprob();
 void bin_testprob();
 void close_pred();
@@ -160,7 +163,7 @@ int randomi(int n, double *dseed);
 
 void initialize_bfs_bbr();
 void free_bfs_bbr();
-void bfs_bbr(upper_bound);
+void bfs_bbr(int upper_bound);
 void gen_loads(int depth, int remaining_time, int start, int n_eligible);
 void backtrack(int index);
 int check_solution(int *stations, int n_stations);
@@ -169,7 +172,7 @@ void prn_load(int depth);
 
 // Functions in io.c
 
-void read_problem(char *f);
+void read_problem(const char *f);
 void prn_problem();
 void prn_tasks(short *tasks, int n);
 void prn_pred(char **predecessor_matrix);
@@ -189,17 +192,17 @@ int check_stations(char *deg, short *stations, int *start_station, int n_station
 
 void initialize_states();
 void reinitialize_states();
-void store_state(char *degrees, char n_stations, char LB, int idle, int hash_value, int previous);
+void store_state(char *degrees, char n_stations, char LB, int idle, long hash_value, int previous);
 int get_state();
 void prn_states(int n_stations);
 void initialize_hash_table();
-int find_or_insert(double key, char *degrees, char n_stations, char LB, int idle, int hash_value, int previous, int method, int *status);
+int find_or_insert(double key, char *degrees, char n_stations, char LB, int idle, long hash_value, int previous, int method, int *status);
 void initialize_heaps();
 void reinitialize_heaps();
 void free_heaps();
 int get_min();
 int delete_min(heap_record *heap);
-void insert(heap_record *heap, double key, char *degrees, char n_stations, char LB, int idle, int hash_value, int previous, int add_to_states);
+void insert(heap_record *heap, double key, char *degrees, char n_stations, char LB, int idle, long hash_value, int previous, int add_to_states);
 void siftup(heap_record *heap, int k);
 void siftdown(heap_record *heap, int k);
 
@@ -221,7 +224,7 @@ int check_assignment(int *stations, int n_stations, int max_cycle_time);
 
 void initialize_best_first_bbr();
 void free_best_first_bbr();
-void best_first_bbr(upper_bound);
+void best_first_bbr(int upper_bound);
 void gen_loads2(int depth, int remaining_time, int start, int n_eligible);
 
 // Functions in bin_packing.c
@@ -255,3 +258,8 @@ int compare_sizes(char *key1, short *items);
 void prn_bin_hash_table();
 void prn_bin_hash_table_entry(int index);
 int get_n_in_bin_hash_table();
+
+}; // end namespace salb;
+
+
+

@@ -1,5 +1,8 @@
 #include "bbr.h"
 
+namespace salb
+{
+
 /*****************************************************************************/
 
 /*
@@ -43,7 +46,7 @@ void reinitialize_states()
 
 //_________________________________________________________________________________________________
 
-void store_state(char *degrees, char n_stations, char LB, int idle, int hash_value, int previous)
+void store_state(char *degrees, char n_stations, char LB, int idle, long hash_value, int previous)
 /*
    1. This routine stores a new state in the array states.
       a. It stores it in the next available position, which is determined
@@ -137,7 +140,7 @@ void prn_states(int n_stations)
 // C++ by Sedgwick for explanations of hashing.
 
 static int  n_in_hash_table;
-static hash_record hash_table[HASH_SIZE];
+static hash_record* hash_table;
 
 //_________________________________________________________________________________________________
 
@@ -154,6 +157,8 @@ void initialize_hash_table()
 {
    int      i;
 
+   MALLOC(hash_table, HASH_SIZE, hash_record);
+
    n_in_hash_table = 0;
    for (i = 0; i < HASH_SIZE; i++) {
       hash_table[i].index = -1;
@@ -162,7 +167,7 @@ void initialize_hash_table()
 
 //_________________________________________________________________________________________________
 
-int find_or_insert(double key, char *degrees, char n_stations, char LB, int idle, int hash_value, int previous, int method, int *status)
+int find_or_insert(double key, char *degrees, char n_stations, char LB, int idle, long hash_value, int previous, int method, int *status)
 /*
    1. This routine uses the linear probing method to search the hash table
       for a state.
@@ -188,7 +193,7 @@ int find_or_insert(double key, char *degrees, char n_stations, char LB, int idle
 
 */
 {
-   int      hash_index, index;
+   long hash_index, index;
    clock_t  start_time;
 
    start_time = clock();
@@ -386,7 +391,7 @@ int delete_min(heap_record *heap)
 
 //_________________________________________________________________________________________________
 
-void insert(heap_record *heap, double key, char *degrees, char n_stations, char LB, int idle, int hash_value, int previous, int add_to_states)
+void insert(heap_record *heap, double key, char *degrees, char n_stations, char LB, int idle, long hash_value, int previous, int add_to_states)
 /*
    1. This function inserts a state into the heap and calls store_state to add it to the list of states.
    2. add_to_states = 1 indicates that store_state should be called.
@@ -460,3 +465,8 @@ void siftdown(heap_record *heap, int k)
       j = k + k;
    }
 }
+
+}; // end namespace salb
+
+
+

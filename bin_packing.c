@@ -1,5 +1,8 @@
 #include "bbr.h"
 
+namespace salb
+{
+
 /*
    1. These functions solve a bin packing problem to be used as a lower bound for the
       assembly line balancing problem.
@@ -59,7 +62,7 @@ static   clock_t  start_time;
 
 // The following variables are used in bin_gen_nondominated_loads and the functions it calls (such as feasible and test_domination).
 
-static   int      bin;                    // bin = the number of the bin that is being loaded.
+//static   int      bin;                    // bin = the number of the bin that is being loaded.
 static   short    *included;              // list of items currently in the bin.
 static   int      *excluded_sizes;        // excluded_sizes(s) = number of items of size s that are currently excluded from the bin.
 static   int      n_included;             // number of items currently in the bin.
@@ -531,7 +534,7 @@ int bin_backtrack2(int index)
 */
 {
    int      *bfd_solution, best_child, flag, i, *in_items, j, n, n_assigned, n_bfd_bins, n_bins, n_remaining;
-   int      parent_index, s, *sizes_in_child, *sizes_in_parent, *solution;
+   int      /*parent_index,*/ s, *sizes_in_child, *sizes_in_parent, *solution;
    short    *items, *remaining_items;
 
    assert((0 <= index) && (index < BIN_HASH_SIZE));
@@ -572,7 +575,7 @@ int bin_backtrack2(int index)
 
    n_bins = 0;
    n_assigned = 0;
-   parent_index = index;
+   /*parent_index = index;*/
    best_child = bin_hash_table[index].best_child;
    while(best_child >= 0) {
       n_bins++;
@@ -620,7 +623,7 @@ int bin_backtrack2(int index)
          }
       }
 
-      parent_index = index;
+      //parent_index = index;
       index = best_child;
       best_child = bin_hash_table[index].best_child;
    }
@@ -1174,7 +1177,7 @@ int best_fit_decreasing(short *available_items, int *solution)
    6. Written 4/24/09.
 */
 {
-   int      i, ii, j, index, k, n_available_items, n_bins_used, new_remaining_size, n_open_bins, size_j;
+   int      i, /*ii,*/ j, index, k, n_available_items, n_bins_used, new_remaining_size, n_open_bins, size_j;
    open_bin *open_bins;
 
    n_available_items = available_items[0];
@@ -1413,10 +1416,10 @@ void prn_bfd_solution(short *eligible, int *solution, int z)
 
 void prn_dfs_bbr_info(short *eligible, int depth, int lb, int z)
 {
-   int      i, index, n_eligible;
+   int      i, /*index,*/ n_eligible;
 
    n_eligible = eligible[0];
-   index = hash_items(eligible);
+   //index = hash_items(eligible);
    printf("%2d %2d %2d %2d ", depth, lb, z, n_eligible); 
    //printf("%2d %2d %2d %2d %8d ", depth, lb, z, n_eligible, index); 
    //prn_short(eligible, n_eligible); 
@@ -1690,11 +1693,11 @@ int compare_sizes(char *key, short *items)
 
 void prn_bin_hash_table()
 {
-   int      cnt, i, j, n_key, s;
+   int      /*cnt,*/ i, j, n_key, s;
 
    for(s = 1; s <= max_size; s++) printf("%4d ", bin_hash_values[s]);
    printf("\n");
-   cnt = 0;
+   //cnt = 0;
    for(i = 0; i < BIN_HASH_SIZE; i++) {
       if(bin_hash_table[i].key != NULL) {
          printf("%8d %2d %8d: ", i, bin_hash_table[i].z, bin_hash_table[i].best_child);
@@ -1749,3 +1752,9 @@ int get_n_in_bin_hash_table()
 {
    return(n_in_bin_hash_table);
 }
+
+}; // end namespace salb
+
+
+
+

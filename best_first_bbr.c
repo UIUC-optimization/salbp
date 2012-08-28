@@ -1,5 +1,8 @@
 #include "bbr.h"
 
+namespace salb
+{
+
 static   char     *degrees;      // work vector used by bset_first_bbr and genloads2
 static   short    *eligible;     // work vector used by best_first_bbr and genloads2
 static   short    *tasks;        // work vector used by best_first_bbr and genloads2
@@ -34,7 +37,7 @@ void free_best_first_bbr()
 
 //_________________________________________________________________________________________________
 
-void best_first_bbr(upper_bound)
+void best_first_bbr(int upper_bound)
 /*
    1. This function uses best first search branch bound and remember (BBR) to find an optimal solution
       for the simple assembly line balancing problem.
@@ -164,7 +167,7 @@ void best_first_bbr(upper_bound)
       //index = delete_min(dbfs_heaps[0]);
       index = get_min();
    }
-   printf("   verified_optimality = %d\n", verified_optimality);
+   printf("   verified_optimality = %d; value = %d\n", verified_optimality, UB);
    if(verified_optimality == 0) printf("   ************* DID NOT VERIFY OPTIMALITY ************\n");
 
    search_info.best_first_cpu += (double) (clock() - start_time) / CLOCKS_PER_SEC;
@@ -369,3 +372,5 @@ void gen_loads2(int depth, int remaining_time, int start, int n_eligible)
    }   
 
 }
+
+}; // end namespace salb

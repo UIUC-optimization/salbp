@@ -1,4 +1,8 @@
 #include "bbr.h"
+#include <cstdint>
+
+namespace salb
+{
 
 static   char     *degrees;      // work vector used by bfs_bbr and genloads
 static   short    *eligible;     // work vector used by bfs_bbr and genloads
@@ -33,7 +37,7 @@ void free_bfs_bbr()
 
 //_________________________________________________________________________________________________
 
-void bfs_bbr(upper_bound)
+void bfs_bbr(int upper_bound)
 /*
    1. This function uses breadth first search (BFS) branch bound and remember (BBR) to find an optimal solution
       for the simple assembly line balancing problem.
@@ -411,8 +415,8 @@ int check_state(int index)
 */
 {
    char     degree;
-   int      i, idle, j, jj, stop, t_assigned;
-   _int64   hash_value;
+   int      i, /*idle,*/ j, jj, stop, t_assigned;
+   std::int64_t   hash_value;
 
    // Check the idle time and the hash_value.
 
@@ -425,7 +429,7 @@ int check_state(int index)
       }
    }
    hash_value = hash_value % HASH_SIZE;
-   idle = cycle * states[index].n_stations - t_assigned;
+   //idle = cycle * states[index].n_stations - t_assigned;
 
    if(hash_value != states[index].hash_value) {
       printf("hash_value is incorrect\n");
@@ -469,3 +473,9 @@ void prn_load(int depth)
    for(i = 1; i <= depth-1; i++) printf("%2d ", tasks[i]);
    printf(")\n");
 }
+
+}; // end namespace salb
+
+
+
+

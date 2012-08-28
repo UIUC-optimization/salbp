@@ -1,55 +1,88 @@
 #include "bbr.h"
+#include <fstream>
+#include <sstream>
 
-void read_problem(char *f)
+using namespace std;
+
+namespace salb
+{
+
+void read_problem(const char *f)
 /*
    1. This function was created 2/24/06 by modifying read_problem from
       c:\sewell\research\schedule\rtardy\cprogram\io.c.
 */
 {
-   FILE     *in,*fopen();
+   FILE     *in; //,*fopen();
    int      i, j, k;
    int      tt;
 
-   if ((in = fopen(f,"r")) == NULL) {
-      fprintf(stderr,"Unable to open %s for input\n",f);
-      exit(1);
-   }
+    ifstream input(f);
+    if (!input) 
+	{
+		fprintf(stderr, "Unable to open %s for input\n", f);
+		exit(1);
+	}
+	
+	string line;
+	while(getline(input, line))
+	{
+		if (line[0] == '<' || line == "\r") continue;
+		stringstream(line) >> n_tasks;
+		break;
+	}
+	while (getline(input, line))
+	{ 
+		if (line[0] == '<' || line == "\r") continue;
+		break; 
+	}
+	while (getline(input, line))
+	{ 
+		if (line[0] == '<' || line == "\r") continue;
+		break; 
+	}
 
-   fscanf(in,"%d",&n_tasks);
    MALLOC(t,n_tasks+1,int);
    t[0] = n_tasks;
 
-   for(i = 1; i <= n_tasks; i++) {
-      fscanf(in,"%d",&tt);
-      t[i] = tt;
-   }
+    for (i = 1; i <= n_tasks; ++i)
+	{
+		getline(input, line);
+		if (line[0] == '<' || line == "\r") { --i; continue; };
+		int dummy;
+		stringstream(line) >> dummy >> t[i];
+	}
 
    MALLOC(predecessor_matrix, n_tasks+1, char *);
-   for(i = 1; i <= n_tasks; i++) {
+   for (i = 1; i <= n_tasks; i++) 
+   {
       MALLOC(predecessor_matrix[i], n_tasks+1, char);
-      for(j = 1; j <= n_tasks; j++) {
+      for (j = 1; j <= n_tasks; j++) 
          predecessor_matrix[i][j] = 0;
-      }
    }
 
-   for(k = 1; k <= n_tasks*n_tasks; k++) {
-      fscanf(in, "%d, %d", &i, &j);
-      if((i == -1) & (j == -1)) {
-         break;
-      }
-      if ((i == j) || (i < 1) || (i > n_tasks) || (j < 1) || (j > n_tasks)) {
-         fprintf(stderr,"Error reading predecessors.\n");
-         return;
-      }
-      predecessor_matrix[i][j] = 1;
-   }
+	while (getline(input, line))
+	{
+		if (line[0] == '<' || line == "\r") continue;
 
-   MALLOC(hash_values, n_tasks+1, int);
-   for (i = 1; i <= n_tasks; i++) {
+		stringstream sline(line);
+		sline >> i;
+		sline.ignore();
+		sline >> j;
+
+		if ((i == j) || (i < 1) || (i > n_tasks) || (j < 1) || (j > n_tasks))
+		{
+			fprintf(stderr, "Error reading predecessors.\n");
+			return;
+		}
+		
+		predecessor_matrix[i][j] = 1;
+	}
+
+   MALLOC(hash_values, n_tasks+1, long);
+   for (i = 1; i <= n_tasks; i++) 
       hash_values[i] = randomi(HASH_SIZE, &seed) - 1;
-   }
 
-   fclose(in);
 }
 
 
@@ -128,4 +161,9 @@ void prn_short(short *vector, int n)
    }
    printf("\n");
 }
+
+}; // end namespace salb
+
+
+
 

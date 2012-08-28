@@ -7,10 +7,13 @@
    Phase III. If Phase II is unable to verify optimality, then BB&R is executed with a breadth first search strategy.
 */
 
+namespace salb
+{
+
 searchinfo search_info;
 int      first_state;            // index (in states) where first unexplored is stored
 int      last_state;             // index (in states) last  state is stored
-state    states[STATE_SPACE+1];  // Stores states
+state*   states;				 // Stores states
 heap_record **dbfs_heaps;
 heap_record *bfs_heap;
 int      cycle = 0;              // Cycle time for the stations
@@ -25,7 +28,7 @@ int      *t;                     // t[i] = processing time of task i
 int      *n_successors;          // n_successors[i] = number of successors of i in closed graph.
 int      *n_predecessors;        // n_predecessors[i] = number of predecessors of i in closed graph.
 int      *positional_weight;     // positional_weight[i] = t[i] + sum(t[j]: j is a successor of i).
-int      *hash_values;           // hash_values(j) = hash value assigned to task j.
+long 	 *hash_values;           // hash_values(j) = hash value assigned to task j.
 double   *LB2_values;            // LB2_values[j] = the value assigned to task j to use in computing LB2.
 double   *LB3_values;            // LB3_values[j] = the value assigned to task j to use in computing LB3.
 int      *descending_order;      // descending_order[k] = the task with the kth largest processing time.
@@ -36,7 +39,7 @@ problem  problems[31];           // Cycle times and upper bounds for benchmark p
 
 float    alpha = 0.01;
 float    beta = 0.01;
-float    gamma = 0.02;
+float    gimmel = 0.02;
 char     *prob_file;        // problem file
 int      bin_pack_flag = -1;
 int      bin_pack_lb = 0;   // -b option: 1 = use bin packing LB, 0 = do not use
@@ -46,37 +49,46 @@ int      search_strategy = 1; /* -m option: search_strategy during Phase II
 int      prn_info = 0;      // -p option: controls level of printed info
 double   seed=3.1567;       // -s option: seed for random number generation
 
+}; // end namespace salb
 
-main(int ac, char **av)
+
+int main(int ac, char **av)
 {
    double   cpu;
    time_t   current_time; 
    clock_t  start_time;
 
    start_time = clock();
-   search_info.start_time = clock();
-   search_info.hoffman_cpu = 0.0;
-   search_info.best_first_cpu = 0.0;
-   search_info.bfs_bbr_cpu = 0.0;
-   search_info.find_insert_cpu = 0.0;
+   salb::search_info.start_time = clock();
+   salb::search_info.hoffman_cpu = 0.0;
+   salb::search_info.best_first_cpu = 0.0;
+   salb::search_info.bfs_bbr_cpu = 0.0;
+   salb::search_info.find_insert_cpu = 0.0;
 
    current_time = time(NULL);
    
-   parseargs (ac, av);
-   if (prn_info > 0) printf("%s start at %s\n", av[ac-1], ctime(&current_time));
+   salb::parseargs (ac, av);
+   if (salb::prn_info > 0) printf("%s start at %s\n", av[ac-1], ctime(&current_time));
 
-   //bin_testprob();
-   //testprob();
-   define_problems();
-   benchmarks();
+   salb::bin_testprob();
+   salb::testprob();
+   //salb::define_problems();
+   //salb::benchmarks(salb::prob_file);
 
    cpu = (double) (clock() - start_time) / CLOCKS_PER_SEC;
    printf("Hoffman cpu = %6.2f  best_first_bbr cpu = %6.2f  bfs_bbr cpu = %6.2f find_insert_cpu = %6.2f  bin_cpu = %6.2f  cpu = %6.2f\n", 
-           search_info.hoffman_cpu, search_info.best_first_cpu, search_info.bfs_bbr_cpu, search_info.find_insert_cpu, search_info.bin_cpu, cpu);
+           salb::search_info.hoffman_cpu, salb::search_info.best_first_cpu, 
+		   salb::search_info.bfs_bbr_cpu, salb::search_info.find_insert_cpu, 
+		   salb::search_info.bin_cpu, cpu);
 
    current_time = time(NULL);
-   if (prn_info > 0) printf("\n%s end at %s\n", av[ac-1], ctime(&current_time));
+   if (salb::prn_info > 0) printf("\n%s end at %s\n", av[ac-1], ctime(&current_time));
+
+   return 0;
 }
+
+namespace salb
+{
 
 //_________________________________________________________________________________________________
 
@@ -129,17 +141,17 @@ void usage (char *prog)
 
 /*****************************************************************************/
 
-void benchmarks()
+void benchmarks(const char* filename)
 {
    char     *degrees;
-   int      best_cycle, count, graph, i, iter, j, min_n_stations, n_stations, *stations, sum, t_sum, upper_bound;
+   int      count, graph, i, iter, j, min_n_stations, n_stations, *stations, sum, t_sum, upper_bound;
    int      n_explored, n_generated, n_states;
    double   best_first_cpu, bfs_bbr_cpu, best_hoffman_cpu, hoffman_cpu, total_cpu;
    clock_t  start_time;
 
    sum = 0;
-   for(graph = 24; graph <= 24; graph++) {
-      read_problem(problems[graph].file_name);
+//   for(graph = 24; graph <= 24; graph++) {
+      read_problem(filename);
       //prn_problem();
 
       if ((graph == 2) || (graph == 3) || (graph == 8) || (graph == 11) || (graph == 13) || (graph == 16) || (graph == 19) || (graph == 21) || (graph == 23) || (graph == 25) || (graph == 26) || (graph == 27) || (graph == 28) || (graph == 30)) {
@@ -175,7 +187,7 @@ void benchmarks()
          min_n_stations = BIG_INT;
          for(alpha = 0.000; alpha <= 0.02; alpha += 0.005) {
             for(beta = 0.000; beta <= 0.02; beta += 0.005) {
-               for(gamma = 0; gamma <= 0.03; gamma += 0.01) {
+               for(gimmel = 0; gimmel <= 0.03; gimmel += 0.01) {
                   n_stations = hoffman(degrees, 1000, 1, 5000);
                   if(n_stations < min_n_stations) min_n_stations = n_stations;
                }
@@ -215,7 +227,7 @@ void benchmarks()
          min_n_stations = BIG_INT;
          for(alpha = 0.000; alpha <= 0.02; alpha += 0.005) {
             for(beta = 0.000; beta <= 0.02; beta += 0.005) {
-               for(gamma = 0; gamma <= 0.03; gamma += 0.01) {
+               for(gimmel = 0; gimmel <= 0.03; gimmel += 0.01) {
                   n_stations = hoffman(degrees, 1000, 1, 5000);
                   if(n_stations < min_n_stations) {
                      min_n_stations = n_stations;
@@ -304,7 +316,7 @@ void benchmarks()
       free(LB3_values);
       free(sorted_task_times);
       free(descending_order);
-   }
+   //}
 
    free(degrees);
    printf("%2d\n", sum);
@@ -315,7 +327,7 @@ void benchmarks()
 void testprob()
 {
    char     *degrees;
-   int      count, i, j, *stations, upper_bound;
+   int      count, i, j, upper_bound;
    
    read_problem(prob_file);
    //prn_problem();
@@ -331,8 +343,8 @@ void testprob()
    compute_positional_weights();
    //prn_vec(n_predecessors, n_tasks); prn_vec(n_successors, n_tasks); prn_vec(positional_weight, n_tasks);
 
-   cycle = 47;
-   upper_bound = 33;
+   cycle = 1000;
+   //upper_bound = 33;
    MALLOC(degrees, n_tasks+1, char);
    for(i = 1; i <= n_tasks; i++) {
       count = 0;
@@ -341,9 +353,33 @@ void testprob()
       }
       degrees[i] = count;
    }
+
+   MALLOC(states, STATE_SPACE+1, state);
    compute_descending_order();
    compute_LB2_values();
    compute_LB3_values();
+
+         double start_time = clock();
+         double best_hoffman_cpu = 0.0;
+         initialize_hoffman();
+
+         int min_n_stations = BIG_INT;
+         for(alpha = 0.000; alpha <= 0.02; alpha += 0.005) {
+            for(beta = 0.000; beta <= 0.02; beta += 0.005) {
+               for(gimmel = 0; gimmel <= 0.03; gimmel += 0.01) {
+                  int n_stations = hoffman(degrees, 1000, 1, 5000);
+                  if(n_stations < min_n_stations) {
+                     min_n_stations = n_stations;
+                     best_hoffman_cpu = (double) (clock() - start_time) / CLOCKS_PER_SEC;
+                  }
+               }
+            }
+         }
+         
+         upper_bound = min_n_stations;
+         UB = min_n_stations;
+         free_hoffman();
+         double hoffman_cpu = (double) (clock() - start_time) / CLOCKS_PER_SEC;
 /*
    initialize_hoffman();
    for(alpha = 0.001; alpha < 0.02; alpha += 0.001) {
@@ -359,12 +395,12 @@ void testprob()
    //gen_initial_assignment(cycle, stations, upper_bound);
    //sim_anneal(cycle, stations, upper_bound, 10000000, 0.99999, 10*cycle);
 
-   initialize_bfs_bbr();
+   //initialize_bfs_bbr();
    initialize_bin_packing();
-   bfs_bbr(upper_bound);
+   //bfs_bbr(upper_bound);
 
-   //initialize_best_first_bbr();
-   //best_first_bbr(upper_bound);
+   initialize_best_first_bbr();
+   best_first_bbr(upper_bound);
 
    free(degrees);
    free_bin_packing();
@@ -375,7 +411,7 @@ void testprob()
 void bin_testprob()
 {
    char     *degrees;
-   int      count, i, j, *stations, upper_bound;
+   int      count, i, j; //, upper_bound;
    short    *items;
    
    read_problem(prob_file);
@@ -392,8 +428,8 @@ void bin_testprob()
    compute_positional_weights();
    //prn_vec(n_predecessors, n_tasks); prn_vec(n_successors, n_tasks); prn_vec(positional_weight, n_tasks);
 
-   cycle = 47;
-   upper_bound = 33;
+   cycle = 1000;
+   //upper_bound = 33;
    MALLOC(degrees, n_tasks+1, char);
    for(i = 1; i <= n_tasks; i++) {
       count = 0;
@@ -414,7 +450,7 @@ void bin_testprob()
    items[0] = n_tasks;
    bin_dfs_bbr(items);
    //bfs_bbr(upper_bound);
-   prn_bin_hash_table();
+   //prn_bin_hash_table();
 
    free(degrees);
    free_bin_packing();
@@ -745,7 +781,7 @@ int LB3b()
 */
 {
    int      flag, h, i, j, k, lb, *sorted_t, start;
-   int      first_one, first_half, last_one, last_half;
+   int      /*first_one,*/ first_half, last_one, last_half;
    double   best_sum, *best_w, sum_weights, *w;
 
 
@@ -816,10 +852,10 @@ int LB3b()
       if(w[i] == 0.5) last_half = i;
    }
 
-   first_one = -1;
+   //first_one = -1;
    first_half = -1;
    for(i = n_tasks; i >= 1; i--) {
-      if(w[i] == 1) first_one = i;
+      //if(w[i] == 1) first_one = i;
       if(w[i] == 0.5) first_half = i;
    }
 
@@ -867,37 +903,37 @@ void define_problems()
    int      i;
    problem  probs[31] = 
    {
-      "", {0}, {0},
-      "c:\\sewell\\research\\assembly\\data\\bowman8.in2", {1, 20}, {1, 5},
-      "c:\\sewell\\research\\assembly\\data\\mansoor.in2", {3, 48, 62, 94}, {3, 4, 3, 2},
-      "c:\\sewell\\research\\assembly\\data\\mertens.in2", {6, 6, 7, 8, 10, 15, 18}, {6, 6, 5, 5,  3,  2,  2},
-      "c:\\sewell\\research\\assembly\\data\\jaeschke.in2", {5, 6, 7, 8, 10, 18}, {5, 8, 7, 6,  4,  3},
-      "c:\\sewell\\research\\assembly\\data\\jackson.in2", {6, 7, 9, 10, 13, 14, 21}, {6, 8, 6,  5,  4,  4,  3},
-      "c:\\sewell\\research\\assembly\\data\\mitchell.in2", {6, 14, 15, 21, 26, 35, 39}, {6, 8,  8,  5,  5,  3,  3},
-      "c:\\sewell\\research\\assembly\\data\\heskia.in2", {6, 138, 205, 216, 256, 324, 342}, {6,  8,   5,   5,   4,   4,   3},
-      "c:\\sewell\\research\\assembly\\data\\sawyer30.in2", {7, 25, 27, 30, 36, 41, 54, 75}, {7, 14, 13, 12, 10,  8,  7,  5},
-      "c:\\sewell\\research\\assembly\\data\\kilbrid.in2", {6, 57, 79, 92, 110, 138, 184}, {6, 10,  7,  6,   6,   4,   3},
-      "c:\\sewell\\research\\assembly\\data\\tonge70.in2", {5, 176, 364, 410, 468, 527}, {5, 21,   10,   9,   8,   7},
-      "c:\\sewell\\research\\assembly\\data\\arc83.in2", {7, 5048, 5853, 6842, 7571, 8412, 8898, 10816}, {7, 16, 14, 12, 11, 10, 9, 8},
-      "c:\\sewell\\research\\assembly\\data\\arc111.in2", {6, 5755, 8847, 10027, 10743, 11378, 17067}, {6, 27, 18, 16, 15, 14, 9},
-      "c:\\sewell\\research\\assembly\\data\\sawyer30.in2", {7, 27, 30, 33, 36, 41, 47, 54}, {7, 13, 12, 11, 10,  8,  7,  7},
-      "c:\\sewell\\research\\assembly\\data\\kilbrid.in2", {6, 56, 62, 69, 79, 92, 111}, {6, 10,  9,  8,  7,  6,   5},
-      "c:\\sewell\\research\\assembly\\data\\tonge70.in2", {12, 160, 168, 176, 185, 195, 207, 220, 234, 251, 270, 293, 320}, {12, 23, 22, 21, 20, 19, 18, 17, 16, 14, 14, 13, 11},
-      "c:\\sewell\\research\\assembly\\data\\arc83.in2", {11, 3786, 3985, 4206, 4454, 4732, 5048, 5408, 5824, 6309, 6883, 7571}, {11, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11},
-      "c:\\sewell\\research\\assembly\\data\\arc111.in2", {14, 5785, 6016, 6267, 6540, 6837, 7162, 7520, 7916, 8356, 8847, 9400, 10027, 10743, 11570}, {14, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 13},
-      "c:\\sewell\\research\\assembly\\data\\roszieg.in2", {6, 14, 16, 18, 21, 25, 32}, {6, 10,  8,  8,  6,  6,  4},
-      "c:\\sewell\\research\\assembly\\data\\buxey.in2", {7, 27, 30, 33, 36, 41, 47, 54}, {7, 13, 12, 11, 10,  8,  7,  7},
-      "c:\\sewell\\research\\assembly\\data\\lutz1.in2", {6, 1414, 1572, 1768, 2020, 2357, 2828}, {6, 11, 10, 9, 8, 7, 6},
-      "c:\\sewell\\research\\assembly\\data\\gunther.in2", {7, 41, 44, 49, 54, 61, 69, 81}, {7, 14, 12, 11,  9,  9,  8,  7},
-      "c:\\sewell\\research\\assembly\\data\\hahn.in2", {5, 2004, 2338, 2806, 3507, 4676}, {5, 8, 7, 6, 5, 4},
-      "c:\\sewell\\research\\assembly\\data\\warnecke.in2", {16, 54, 56, 58, 60, 62, 65, 68, 71, 74, 78, 82, 86, 92, 97, 104, 111}, {16, 31, 29, 29, 27, 27, 25, 24, 23, 22, 21, 20, 19, 17, 17,  15,  14},
-      "c:\\sewell\\research\\assembly\\data\\wee-mag.in2", {24, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 45, 46, 47, 49, 50, 52, 54, 56}, {24, 63, 63, 62, 62, 61, 61, 61, 60, 60, 60, 60, 60, 60, 59, 55, 50, 38, 34, 33, 32, 32, 31, 31, 30},
-      "c:\\sewell\\research\\assembly\\data\\lutz2.in2", {11, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21}, {11, 49, 44, 40, 37, 34, 31, 29, 28, 26, 25, 24},
-      "c:\\sewell\\research\\assembly\\data\\lutz3.in2", {12, 75, 79, 83, 87, 92, 97, 103, 110, 118, 127, 137, 150}, {12, 23, 22, 21, 20, 19, 18,  17,  15,  14,  14,  13,  12},
-      "c:\\sewell\\research\\assembly\\data\\mukherje.in2", {13, 176, 183, 192, 201, 211, 222, 234, 248, 263, 281, 301, 324, 351}, {13, 25,  24,  23,  22,  21,  20,  19,  18,  17,  16,  15,  14,  13},
-      "c:\\sewell\\research\\assembly\\data\\barthold.in2", {8, 403, 434, 470, 513, 564, 626, 705, 805}, {8, 14,  13,  12,  11,  10,   9,   8,   7},
-      "c:\\sewell\\research\\assembly\\data\\barthol2.in2", {27, 84, 85, 87, 89, 91, 93, 95, 97, 99, 101, 104, 106, 109, 112, 115, 118, 121, 125, 129, 133, 137, 142, 146, 152, 157, 163, 170}, {27, 51, 50, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25},
-      "c:\\sewell\\research\\assembly\\data\\scholl.in2", {26, 1394, 1422, 1452, 1483, 1515, 1548, 1584, 1620, 1659, 1699, 1742, 1787, 1834, 1883, 1935, 1991, 2049, 2111, 2177, 2247, 2322, 2402, 2488, 2580, 2680, 2787}, {26, 50, 50, 48, 47, 46, 46, 44, 44, 42, 42, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25}
+	   {"", {0}, {0}},
+	   {"c:\\sewell\\research\\assembly\\data\\bowman8.in2", {1, 20}, {1, 5}},
+       {"c:\\sewell\\research\\assembly\\data\\mansoor.in2", {3, 48, 62, 94}, {3, 4, 3, 2}},
+      {"c:\\sewell\\research\\assembly\\data\\mertens.in2", {6, 6, 7, 8, 10, 15, 18}, {6, 6, 5, 5,  3,  2,  2}},
+      {"c:\\sewell\\research\\assembly\\data\\jaeschke.in2", {5, 6, 7, 8, 10, 18}, {5, 8, 7, 6,  4,  3}},
+      {"c:\\sewell\\research\\assembly\\data\\jackson.in2", {6, 7, 9, 10, 13, 14, 21}, {6, 8, 6,  5,  4,  4,  3}},
+      {"c:\\sewell\\research\\assembly\\data\\mitchell.in2", {6, 14, 15, 21, 26, 35, 39}, {6, 8,  8,  5,  5,  3,  3}},
+      {"c:\\sewell\\research\\assembly\\data\\heskia.in2", {6, 138, 205, 216, 256, 324, 342}, {6,  8,   5,   5,   4,   4,   3}},
+      {"c:\\sewell\\research\\assembly\\data\\sawyer30.in2", {7, 25, 27, 30, 36, 41, 54, 75}, {7, 14, 13, 12, 10,  8,  7,  5}},
+      {"c:\\sewell\\research\\assembly\\data\\kilbrid.in2", {6, 57, 79, 92, 110, 138, 184}, {6, 10,  7,  6,   6,   4,   3}},
+      {"c:\\sewell\\research\\assembly\\data\\tonge70.in2", {5, 176, 364, 410, 468, 527}, {5, 21,   10,   9,   8,   7}},
+      {"c:\\sewell\\research\\assembly\\data\\arc83.in2", {7, 5048, 5853, 6842, 7571, 8412, 8898, 10816}, {7, 16, 14, 12, 11, 10, 9, 8}},
+      {"c:\\sewell\\research\\assembly\\data\\arc111.in2", {6, 5755, 8847, 10027, 10743, 11378, 17067}, {6, 27, 18, 16, 15, 14, 9}},
+      {"c:\\sewell\\research\\assembly\\data\\sawyer30.in2", {7, 27, 30, 33, 36, 41, 47, 54}, {7, 13, 12, 11, 10,  8,  7,  7}},
+      {"c:\\sewell\\research\\assembly\\data\\kilbrid.in2", {6, 56, 62, 69, 79, 92, 111}, {6, 10,  9,  8,  7,  6,   5}},
+      {"c:\\sewell\\research\\assembly\\data\\tonge70.in2", {12, 160, 168, 176, 185, 195, 207, 220, 234, 251, 270, 293, 320}, {12, 23, 22, 21, 20, 19, 18, 17, 16, 14, 14, 13, 11}},
+      {"c:\\sewell\\research\\assembly\\data\\arc83.in2", {11, 3786, 3985, 4206, 4454, 4732, 5048, 5408, 5824, 6309, 6883, 7571}, {11, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11}},
+      {"c:\\sewell\\research\\assembly\\data\\arc111.in2", {14, 5785, 6016, 6267, 6540, 6837, 7162, 7520, 7916, 8356, 8847, 9400, 10027, 10743, 11570}, {14, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 13}},
+      {"c:\\sewell\\research\\assembly\\data\\roszieg.in2", {6, 14, 16, 18, 21, 25, 32}, {6, 10,  8,  8,  6,  6,  4}},
+      {"c:\\sewell\\research\\assembly\\data\\buxey.in2", {7, 27, 30, 33, 36, 41, 47, 54}, {7, 13, 12, 11, 10,  8,  7,  7}},
+      {"c:\\sewell\\research\\assembly\\data\\lutz1.in2", {6, 1414, 1572, 1768, 2020, 2357, 2828}, {6, 11, 10, 9, 8, 7, 6}},
+      {"c:\\sewell\\research\\assembly\\data\\gunther.in2", {7, 41, 44, 49, 54, 61, 69, 81}, {7, 14, 12, 11,  9,  9,  8,  7}},
+      {"c:\\sewell\\research\\assembly\\data\\hahn.in2", {5, 2004, 2338, 2806, 3507, 4676}, {5, 8, 7, 6, 5, 4}},
+      {"c:\\sewell\\research\\assembly\\data\\warnecke.in2", {16, 54, 56, 58, 60, 62, 65, 68, 71, 74, 78, 82, 86, 92, 97, 104, 111}, {16, 31, 29, 29, 27, 27, 25, 24, 23, 22, 21, 20, 19, 17, 17,  15,  14}},
+      {"c:\\sewell\\research\\assembly\\data\\wee-mag.in2", {24, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 45, 46, 47, 49, 50, 52, 54, 56}, {24, 63, 63, 62, 62, 61, 61, 61, 60, 60, 60, 60, 60, 60, 59, 55, 50, 38, 34, 33, 32, 32, 31, 31, 30}},
+      {"c:\\sewell\\research\\assembly\\data\\lutz2.in2", {11, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21}, {11, 49, 44, 40, 37, 34, 31, 29, 28, 26, 25, 24}},
+      {"c:\\sewell\\research\\assembly\\data\\lutz3.in2", {12, 75, 79, 83, 87, 92, 97, 103, 110, 118, 127, 137, 150}, {12, 23, 22, 21, 20, 19, 18,  17,  15,  14,  14,  13,  12}},
+      {"c:\\sewell\\research\\assembly\\data\\mukherje.in2", {13, 176, 183, 192, 201, 211, 222, 234, 248, 263, 281, 301, 324, 351}, {13, 25,  24,  23,  22,  21,  20,  19,  18,  17,  16,  15,  14,  13}},
+      {"c:\\sewell\\research\\assembly\\data\\barthold.in2", {8, 403, 434, 470, 513, 564, 626, 705, 805}, {8, 14,  13,  12,  11,  10,   9,   8,   7}},
+      {"c:\\sewell\\research\\assembly\\data\\barthol2.in2", {27, 84, 85, 87, 89, 91, 93, 95, 97, 99, 101, 104, 106, 109, 112, 115, 118, 121, 125, 129, 133, 137, 142, 146, 152, 157, 163, 170}, {27, 51, 50, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25}},
+      {"c:\\sewell\\research\\assembly\\data\\scholl.in2", {26, 1394, 1422, 1452, 1483, 1515, 1548, 1584, 1620, 1659, 1699, 1742, 1787, 1834, 1883, 1935, 1991, 2049, 2111, 2177, 2247, 2322, 2402, 2488, 2580, 2680, 2787}, {26, 50, 50, 48, 47, 46, 46, 44, 44, 42, 42, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25}}
    };
 
    for(i = 0; i <31; i++) {
@@ -978,8 +1014,13 @@ double ggubfs(double *dseed)
 int randomi(int n, double *dseed)
 {
    int      truncate;
-   double   ggubfs();
+   //double   ggubfs();
 
    truncate = (n * ggubfs(dseed)) + 1;
    return(truncate);
 }
+
+}; // end namespace salb
+
+
+

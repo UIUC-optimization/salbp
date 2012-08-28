@@ -1,5 +1,8 @@
 #include "bbr.h"
 
+namespace salb
+{
+
 static   char     *degrees;      // work vector used by hoffman
 static   short    *best_tasks;   // work vector used by hoffman
 static   short    *eligible;     // work vector used by hoffman
@@ -48,7 +51,7 @@ int hoffman(char *deg, int max_idle, int starting_station, int max_loads)
    5. Written 2/24/06.
 */
 {
-   int      i, ii, idle, j, jj, n_assigned, n_eligible, n_stations, sum_t;
+   int      i, ii, /*idle,*/ j, jj, n_assigned, n_eligible, n_stations, sum_t;
    clock_t  start_time;
 
    start_time = clock();
@@ -69,7 +72,7 @@ int hoffman(char *deg, int max_idle, int starting_station, int max_loads)
    }
    start_station[1] = 1;
 
-   idle = 0;
+   //idle = 0;
    n_stations = 0;
    max_n_full_loads = max_loads;
 
@@ -154,7 +157,7 @@ void gen_load(int depth, int remaining_time, int start, int n_eligible, float co
          }
       
          sub_remaining_time = remaining_time - t[i];
-         sub_cost = cost - t[i] - alpha * positional_weight[i] - beta * successors[i][0] + gamma;
+         sub_cost = cost - t[i] - alpha * positional_weight[i] - beta * successors[i][0] + gimmel;
          //if(sub_remaining_time < min_idle) {
          if(sub_cost < min_cost) {
             min_cost = sub_cost;
@@ -254,3 +257,8 @@ int check_stations(char *deg, short *stations, int *start_station, int n_station
    free(assigned);
    return(1);
 }
+
+}; // end namespace salb
+
+
+
