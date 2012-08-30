@@ -181,7 +181,8 @@ void gen_loads2(int depth, int remaining_time, int start, int n_eligible)
 */
 {
    char     LB;
-   int      full_load, i, ii, j, jj, LB1, LB2, LB3, LB_bin, n_sub_eligible, n, n_unassigned, status, stop, sub_idle, sub_hash_value, sub_remaining_time, t_unassigned;
+   int      full_load, i, ii, j, jj, LB1, LB2, LB3, LB_bin, n_sub_eligible, n, n_unassigned, status, stop, sub_idle, sub_remaining_time, t_unassigned;
+   unsigned long sub_hash_value;
    short    *list_of_items;
    double   cpu, key, LB2_unassigned, LB3_unassigned;
 

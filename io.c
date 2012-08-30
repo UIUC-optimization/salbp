@@ -79,7 +79,7 @@ void read_problem(const char *f)
 		predecessor_matrix[i][j] = 1;
 	}
 
-   MALLOC(hash_values, n_tasks+1, long);
+   MALLOC(hash_values, n_tasks+1, unsigned long);
    for (i = 1; i <= n_tasks; i++) 
       hash_values[i] = randomi(HASH_SIZE, &seed) - 1;
 

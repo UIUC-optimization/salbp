@@ -193,7 +193,7 @@ int find_or_insert(double key, char *degrees, char n_stations, char LB, int idle
 
 */
 {
-   long hash_index, index;
+   unsigned long hash_index, index;
    clock_t  start_time;
 
    start_time = clock();
