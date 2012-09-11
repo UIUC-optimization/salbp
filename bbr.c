@@ -48,6 +48,9 @@ int      search_strategy = 1; /* -m option: search_strategy during Phase II
                                  2 = best first search */
 int      prn_info = 0;      // -p option: controls level of printed info
 double   seed=3.1567;       // -s option: seed for random number generation
+int CPU_LIMIT = 3600;
+int* heap_sizes = NULL;
+clock_t global_start_time;
 
 }; // end namespace salb
 
@@ -56,9 +59,8 @@ int main(int ac, char **av)
 {
    double   cpu;
    time_t   current_time; 
-   clock_t  start_time;
 
-   start_time = clock();
+   salb::global_start_time = clock();
    salb::search_info.start_time = clock();
    salb::search_info.hoffman_cpu = 0.0;
    salb::search_info.best_first_cpu = 0.0;
@@ -70,12 +72,12 @@ int main(int ac, char **av)
    salb::parseargs (ac, av);
    if (salb::prn_info > 0) printf("%s start at %s\n", av[ac-1], ctime(&current_time));
 
-   salb::bin_testprob();
+   //salb::bin_testprob();
    salb::testprob();
    //salb::define_problems();
    //salb::benchmarks(salb::prob_file);
 
-   cpu = (double) (clock() - start_time) / CLOCKS_PER_SEC;
+   cpu = (double) (clock() - salb::global_start_time) / CLOCKS_PER_SEC;
    printf("Hoffman cpu = %6.2f  best_first_bbr cpu = %6.2f  bfs_bbr cpu = %6.2f find_insert_cpu = %6.2f  bin_cpu = %6.2f  cpu = %6.2f\n", 
            salb::search_info.hoffman_cpu, salb::search_info.best_first_cpu, 
 		   salb::search_info.bfs_bbr_cpu, salb::search_info.find_insert_cpu, 
@@ -115,6 +117,9 @@ void parseargs(int ac, char **av)
          case 's':
             seed = atof(av[++cnt]);
             break;
+		 case 't':
+			CPU_LIMIT = atoi(av[++cnt]);
+			break;
          default:
             usage(*av);
             break;
@@ -135,6 +140,7 @@ void usage (char *prog)
    fprintf (stderr, "    -m: method (search_strategy) to use during Phase II 1 = DBFS, 2 = BFS (def=1)\n");
    fprintf (stderr, "    -p: controls level of printed information (def=0)\n");
    fprintf (stderr, "    -s: seed for random number generation\n");
+   fprintf (stderr, "    -t: CPU time limit\n");
    exit (1);
 }
 

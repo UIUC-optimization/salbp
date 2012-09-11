@@ -167,7 +167,7 @@ void best_first_bbr(int upper_bound)
       //index = delete_min(dbfs_heaps[0]);
       index = get_min();
    }
-   printf("   verified_optimality = %d; value = %d\n", verified_optimality, UB);
+   printf("   verified_optimality = %d; value = %d; cpu = %0.2f\n", verified_optimality, UB, ((double)(clock() - global_start_time)/CLOCKS_PER_SEC));
    if(verified_optimality == 0) printf("   ************* DID NOT VERIFY OPTIMALITY ************\n");
 
    search_info.best_first_cpu += (double) (clock() - start_time) / CLOCKS_PER_SEC;

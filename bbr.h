@@ -24,14 +24,11 @@ namespace salb
 
 #define  MAX_N_TASKS 500
 #define  BIG_INT 2147483647
-//#define  STATE_SPACE  4000000 /* allocate space for this many states  */
-#define  STATE_SPACE  70000000 /* allocate space for this many states  */
-//#define  HASH_SIZE 1019
-#define  HASH_SIZE 900000011 // Must be a prime number.  Currently using linear
+#define  STATE_SPACE  60000000 /* allocate space for this many states  */
+#define  HASH_SIZE 600000001 // Must be a prime number.  Currently using linear
                             // probing, but if quadratic probing is used, then
                             // it must be a prime of the form 4j+3.  20000003=4*5000000+3   40000003=4*10000000+3
-#define  HEAP_SIZE 30000000   // Maximum number of elements in a heap.
-#define  CPU_LIMIT 3600
+//#define  HEAP_SIZE 30000000   // Maximum number of elements in a heap.
 
 
 typedef struct searchinfo {
@@ -135,6 +132,9 @@ extern   int      search_strategy;  /* -m option: search_strategy during Phase I
                                        2 = best first search */
 extern   int      prn_info;    // -p option: controls level of printed info
 extern   double   seed;        // -s option: seed for random number generation
+extern	 int CPU_LIMIT;
+extern   int*     heap_sizes;
+extern   clock_t  global_start_time;
 
 
 // Functions in bbr.c
@@ -202,7 +202,7 @@ void reinitialize_heaps();
 void free_heaps();
 int get_min();
 int delete_min(heap_record *heap);
-void insert(heap_record *heap, double key, char *degrees, char n_stations, char LB, int idle, long hash_value, int previous, int add_to_states);
+void insert(heap_record** heap, int* heap_size, double key, char *degrees, char n_stations, char LB, int idle, long hash_value, int previous, int add_to_states);
 void siftup(heap_record *heap, int k);
 void siftdown(heap_record *heap, int k);
 

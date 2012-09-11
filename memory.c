@@ -70,6 +70,8 @@ void store_state(char *degrees, char n_stations, char LB, int idle, long hash_va
       verified_optimality = 0;
       state_space_exceeded = 1;
       fprintf(stderr, "Out of space for states\n");
+	   printf("   verified_optimality = %d; value = %d; cpu = %0.2f\n", verified_optimality, UB, ((double)(clock() - global_start_time)/CLOCKS_PER_SEC));
+	   if(verified_optimality == 0) printf("   ************* DID NOT VERIFY OPTIMALITY ************\n");
       //return;
       exit(1);
    }
@@ -220,8 +222,8 @@ int find_or_insert(double key, char *degrees, char n_stations, char LB, int idle
             if((states[index].open == 0) && (method == 1)) {
                //printf("   State uses fewer stations\n");
                switch (search_strategy) {
-                  case 1:  insert(dbfs_heaps[n_stations], key, degrees, n_stations, LB, idle, hash_value, previous, 0); break;
-                  case 2:  insert(bfs_heap, key, degrees, n_stations, LB, idle, hash_value, previous, 0); break;
+                  case 1:  insert(&dbfs_heaps[n_stations], heap_sizes + n_stations, key, degrees, n_stations, LB, idle, hash_value, previous, 0); break;
+                  case 2:  insert(&bfs_heap, heap_sizes, key, degrees, n_stations, LB, idle, hash_value, previous, 0); break;
                   default: fprintf(stderr,"Unknown search_strategy in find_or_insert\n"); exit(1); break;
                }
             }
@@ -241,8 +243,8 @@ int find_or_insert(double key, char *degrees, char n_stations, char LB, int idle
 
    if(method == 1) {
       switch (search_strategy) {
-         case 1:  insert(dbfs_heaps[n_stations], key, degrees, n_stations, LB, idle, hash_value, previous, 1); break;
-         case 2:  insert(bfs_heap, key, degrees, n_stations, LB, idle, hash_value, previous, 1); break;
+         case 1:  insert(&dbfs_heaps[n_stations], heap_sizes + n_stations, key, degrees, n_stations, LB, idle, hash_value, previous, 1); break;
+         case 2:  insert(&bfs_heap, heap_sizes, key, degrees, n_stations, LB, idle, hash_value, previous, 1); break;
          default: fprintf(stderr,"Unknown search_strategy in find_or_insert\n"); exit(1); break;
       }
    } else {
@@ -292,18 +294,27 @@ int find_or_insert(double key, char *degrees, char n_stations, char LB, int idle
 void initialize_heaps()
 {
    int      i;
+   int initHeapSize = 100000;
 
-   switch (search_strategy) {
+   switch (search_strategy) 
+   {
       case 1:  MALLOC(dbfs_heaps, n_tasks+1, heap_record *);
-               for(i = 0; i <= UB; i++) {
-                  MALLOC(dbfs_heaps[i], HEAP_SIZE+1, heap_record);
+			   MALLOC(heap_sizes, n_tasks+1, int);
+               for(i = 0; i <= UB; i++) 
+			   {
+				  heap_sizes[i] = initHeapSize;
+                  MALLOC(dbfs_heaps[i], initHeapSize+1, heap_record);
                   dbfs_heaps[i][0].index = 0;
                }
                for(i = UB + 1; i <= n_tasks; i++) MALLOC(dbfs_heaps[i], 1, heap_record);
                break;
-      case 2:  MALLOC(bfs_heap, STATE_SPACE+1, heap_record);   // Use STATE_SPACE instead of HEAP_SIZE so that there is enough room to store all the states in one heap.
+
+      case 2:  MALLOC(heap_sizes, 1, int);
+			   MALLOC(bfs_heap, STATE_SPACE+1, heap_record);   // Use STATE_SPACE instead of HEAP_SIZE so that there is enough room to store all the states in one heap.
+			   heap_sizes[0] = initHeapSize;
                bfs_heap[0].index = 0;
                break;
+
       default: fprintf(stderr,"Unknown search_strategy in initialize_heaps\n"); exit(1); break;
    }
 }
@@ -391,7 +402,7 @@ int delete_min(heap_record *heap)
 
 //_________________________________________________________________________________________________
 
-void insert(heap_record *heap, double key, char *degrees, char n_stations, char LB, int idle, long hash_value, int previous, int add_to_states)
+void insert(heap_record** heap, int* heap_size, double key, char *degrees, char n_stations, char LB, int idle, long hash_value, int previous, int add_to_states)
 /*
    1. This function inserts a state into the heap and calls store_state to add it to the list of states.
    2. add_to_states = 1 indicates that store_state should be called.
@@ -400,21 +411,30 @@ void insert(heap_record *heap, double key, char *degrees, char n_stations, char 
 {
    int      n_in_heap;
 
-   n_in_heap = heap[0].index;
-   if(((search_strategy == 1) && (n_in_heap >= HEAP_SIZE)) || ((search_strategy == 2) && (n_in_heap >= STATE_SPACE))) {
-      if(verified_optimality == 1) printf("heap full\n");
-      verified_optimality = 0;
-      return;
-      //fprintf(stderr, "Out of space for heap\n");
-      //exit(1);
-   }
+   n_in_heap = (*heap)[0].index;
+   if(n_in_heap >= *heap_size)
+   {
+	   if ((*heap_size) * 2 > STATE_SPACE)
+	   {
+		   if (verified_optimality == 1) printf("heap full\n");
+		   verified_optimality = 0;
+		   return;
+	   }
+
+	   else
+	   { 
+		   printf ("resizing heap\n");
+		   *heap_size *= 2;
+		   *heap = (heap_record*)realloc(*heap, (*heap_size + 1) * sizeof(heap_record));
+	   }
+   } 
 
    n_in_heap++;
-   heap[0].index = n_in_heap;
-   heap[n_in_heap].key = key;
+   (*heap)[0].index = n_in_heap;
+   (*heap)[n_in_heap].key = key;
    store_state(degrees, n_stations, LB, idle, hash_value, previous);
-   heap[n_in_heap].index = last_state;
-   siftup(heap, n_in_heap);
+   (*heap)[n_in_heap].index = last_state;
+   siftup(*heap, n_in_heap);
 }
 
 //_________________________________________________________________________________________________
