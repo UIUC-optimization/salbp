@@ -50,14 +50,19 @@ typedef struct searchinfo {
 } searchinfo, *search_infopnt;
 
 typedef struct state {
-   char  *degrees;      // The number of immediate predecessor not yet assigned to a workstation
-   char  n_stations;    // The total number of work stations that have been used so far
+   char* local_degrees; 
    char  LB;            // The best lower bound computed for this state.
-   int   idle;          // The total idle time for this state = cycle*n_stations - sum(i: degree[i]=-1) t[i]
-   unsigned long hash_value;    // The hash value of the jobs that have been assigned to a workstation
    int   previous;      // Previous state.  Used in backtracking to constuct optimal solution
    char  open;          // = 1 if this state has not been explored yet.
 } state, *statepnt;
+
+typedef struct backtrackinfo
+{
+	char* degrees;
+	char n_stations;
+	int idle;
+	int hash_value;
+} backtrackinfo;
 
 typedef struct hash_record {
    int   index;
@@ -113,7 +118,7 @@ extern   int      *t;                     // t[i] = processing time of task i
 extern   int      *n_successors;          // n_successors[i] = number of successors of i in closed graph.
 extern   int      *n_predecessors;        // n_predecessors[i] = number of predecessors of i in closed graph.
 extern   int      *positional_weight;     // positional_weight[i] = t[i] + sum(t[j]: j is a successor of i).
-extern   unsigned long *hash_values;           // hash_values(j) = hash value assigned to task j.
+extern   int	  *hash_values;           // hash_values(j) = hash value assigned to task j.
 extern   double   *LB2_values;            // LB2_values[j] = the value assigned to task j to use in computing LB2.
 extern   double   *LB3_values;            // LB3_values[j] = the value assigned to task j to use in computing LB3.
 extern   int      *descending_order;      // descending_order[k] = the task with the kth largest processing time. 
@@ -141,9 +146,7 @@ extern   clock_t  global_start_time;
 
 void parseargs(int ac, char **av);
 void usage (char *prog);
-void benchmarks(const char* filename);
 void testprob();
-void bin_testprob();
 void close_pred();
 void reverse_pred();
 void find_successors();
@@ -153,7 +156,6 @@ void compute_LB3_values();
 void compute_positional_weights();
 void compute_descending_order();
 int LB3b();
-void define_problems();
 int sum(int *x, short *indices);
 double sum_double(double *x, short *indices);
 double ggubfs(double *dseed);
@@ -194,6 +196,7 @@ void initialize_states();
 void reinitialize_states();
 void store_state(char *degrees, char n_stations, char LB, int idle, long hash_value, int previous);
 int get_state();
+backtrackinfo* get_state_info(int index);
 void prn_states(int n_stations);
 void initialize_hash_table();
 int find_or_insert(double key, char *degrees, char n_stations, char LB, int idle, long hash_value, int previous, int method, int *status);

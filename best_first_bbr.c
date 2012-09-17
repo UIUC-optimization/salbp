@@ -66,21 +66,24 @@ void best_first_bbr(int upper_bound)
    // Add the root problem to the hash table and the list of states.
 
    t_sum = 0;
-   for(i = 1; i <= n_tasks; i++) {
+   for (i = 1; i <= n_tasks; i++) 
+   {
       count = 0;
       t_sum += t[i];
-      for(j = 1; j <= n_tasks; j++) {
-         if(predecessor_matrix[j][i] == 1) count++;
-      }
+      for (j = 1; j <= n_tasks; j++) 
+         if (predecessor_matrix[j][i] == 1) count++;
       degrees[i] = count;
    }
+
    root_LB = (int) ceil((double) t_sum / (double) cycle);
    LB2 = 0;
    LB3 = 0;
-   for(i = 1; i <= n_tasks; i++) {
+   for (i = 1; i <= n_tasks; i++) 
+   {
       LB2 += LB2_values[i];
       LB3 += LB3_values[i];
    }
+
    LB2 = ceil(LB2);
    LB3 = ceil(LB3);
    if(LB2 > root_LB) root_LB = (int) LB2;
@@ -92,26 +95,26 @@ void best_first_bbr(int upper_bound)
    //   root_LB = i;
    //}
    bin_pack_flag = bin_pack_lb;
-   if((bin_pack_flag == 1) && (root_LB < UB)) {
+
+   if((bin_pack_flag == 1) && (root_LB < UB)) 
+   {
       MALLOC(list_of_items, n_tasks+1,  short);
-      for(i = 1; i <= n_tasks; i++) {
+      for (i = 1; i <= n_tasks; i++) 
+	  {
             j = descending_order[i];
             list_of_items[i] = j;
       }
       list_of_items[0] = n_tasks;
       i = bin_dfs_bbr(list_of_items);
-      if(i < 0) {
+      if (i < 0) 
          bin_pack_flag = 0;
-      } else {
-         if(i > root_LB) {
-            root_LB = i;
-         }
-      }
+      else if (i > root_LB) 
+	     root_LB = i;
       free(list_of_items);
    }
-   if(root_LB < UB) {
+   
+   if(root_LB < UB) 
       index = find_or_insert(0.0, degrees, 0, 0, 0, 0, -1, 1, &status);
-   }
 
    // Main loop
 
@@ -119,55 +122,67 @@ void best_first_bbr(int upper_bound)
    //index = delete_min(dbfs_heaps[0]);
    index = get_min();
    count = 0;
-   while( index >= 0) {
+   while( index >= 0) 
+   {
+	  backtrackinfo* state_info = get_state_info(index);
       cpu = (double) (clock() - search_info.start_time) / CLOCKS_PER_SEC;
-		if (cpu > CPU_LIMIT) {
+		if (cpu > CPU_LIMIT) 
+		{
 		   printf("Time limit reached\n");
 		   verified_optimality = 0;;
 		   break;
 		}
-      if(state_space_exceeded == 1) {
+      if(state_space_exceeded == 1) 
+	  {
          verified_optimality = 0;
          break;
       }
 
       count++;
-      if (count % 10000 == 0) {
+      if (count % 10000 == 0) 
+	  {
          n_unassigned = 0;
-         for(i = 1; i <= n_tasks; i++) if(states[index].degrees[i] >= 0) n_unassigned++;
-         key = ((double) states[index].idle / (double) states[index].n_stations) - 0.02 * n_unassigned;
-         printf("%10d %10d %10d %2d %4d %3d %10.3f\n", count, last_state - count + 1, last_state + 1, states[index].n_stations, states[index].idle, n_tasks - n_unassigned, key);
+         for (i = 1; i <= n_tasks; i++) 
+			 if(state_info->degrees[i] >= 0) n_unassigned++;
+         key = ((double)state_info->idle / state_info->n_stations) - 0.02 * n_unassigned;
+         printf("%10d %10d %10d %2d %4d %3d %10.3f\n", count, last_state - count + 1, last_state+1, 
+				 state_info->n_stations, state_info->idle, n_tasks - n_unassigned, key);
       }
 
       states[index].open = 0;
-      if(states[index].LB < UB) {
+      if(states[index].LB < UB) 
+	  {
          search_info.n_explored++;
-         station = states[index].n_stations + 1;
-         idle = states[index].idle;
-         hash_value = states[index].hash_value;
+         station = state_info->n_stations + 1;
+         idle = state_info->idle;
+         hash_value = state_info->hash_value;
          previous = index;
-         for(i = 1; i <= n_tasks; i++) degrees[i] = states[index].degrees[i];
+         for (i = 1; i <= n_tasks; i++) 
+			 degrees[i] = state_info->degrees[i];
          n_eligible = 0;
-         for(i = 1; i <= n_tasks; i++) {
+         for (i = 1; i <= n_tasks; i++) 
+		 {
             assert((-1 <= degrees[i]) && (degrees[i] <= n_tasks));
-            if(degrees[i] == 0) {
+            if(degrees[i] == 0) 
                eligible[++n_eligible] = i;
-            }
          }
          n_full_loads = 0;
 
          gen_loads2(1, cycle, 1, n_eligible);
       }
       
-      if(root_LB >= UB) {
+      if(root_LB >= UB) 
+	  {
          verified_optimality = 1;
          break;
       }
 
       //index = delete_min(dbfs_heaps[0]);
+	  free(state_info);
       index = get_min();
    }
-   printf("   verified_optimality = %d; value = %d; cpu = %0.2f\n", verified_optimality, UB, ((double)(clock() - global_start_time)/CLOCKS_PER_SEC));
+   printf("   verified_optimality = %d; value = %d; cpu = %0.2f\n", verified_optimality, UB, 
+		   ((double)(clock() - global_start_time)/CLOCKS_PER_SEC));
    if(verified_optimality == 0) printf("   ************* DID NOT VERIFY OPTIMALITY ************\n");
 
    search_info.best_first_cpu += (double) (clock() - start_time) / CLOCKS_PER_SEC;

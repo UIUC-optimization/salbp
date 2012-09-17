@@ -81,49 +81,56 @@ void bfs_bbr(int upper_bound)
    index = get_state();
    level = 0;
    count = 0;
-   while( index >= 0) {
+   while (index >= 0) 
+   {
+	  backtrackinfo* state_info = get_state_info(index);
       cpu = (double) (clock() - search_info.start_time) / CLOCKS_PER_SEC;
-		if (cpu > CPU_LIMIT) {
+		if (cpu > CPU_LIMIT) 
+		{
 		   printf("Time limit reached\n");
 			verified_optimality = 0;;
 		   break;
 		}
-      if(state_space_exceeded == 1) {
+      if(state_space_exceeded == 1) 
+	  {
          verified_optimality = 0;
          break;
       }
 
-      if (states[index].n_stations > level) {
-         level = states[index].n_stations;
+      if (state_info->n_stations > level) 
+	  {
+         level = state_info->n_stations;
          printf("%2d %10d %10d\n", level, count, last_state - first_state + 2);
          count = 0;
          //prn_states(level);
          //if(level >= 3) return;
       }
 
-      if(states[index].open == 1) {
+      if (states[index].open == 1) 
+	  {
          states[index].open = 0;
          count++;
          search_info.n_explored++;
-         station = states[index].n_stations + 1;
-         idle = states[index].idle;
-         hash_value = states[index].hash_value;
+         station = state_info->n_stations + 1;
+         idle = state_info->idle;
+         hash_value = state_info->hash_value;
          previous = states[index].previous;
-         for(i = 1; i <= n_tasks; i++) degrees[i] = states[index].degrees[i];
+         for(i = 1; i <= n_tasks; i++) 
+			 degrees[i] = state_info->degrees[i];
          n_eligible = 0;
-         for(i = 1; i <= n_tasks; i++) {
+         for (i = 1; i <= n_tasks; i++) 
+		 {
             assert((-1 <= degrees[i]) && (degrees[i] <= n_tasks));
-            if(degrees[i] == 0) {
+            if (degrees[i] == 0) 
                eligible[++n_eligible] = i;
-            }
          }
 
          gen_loads(1, cycle, 1, n_eligible);
 
-      } else {
-         states[index].open = 0;
-      }
+      } 
+	  else states[index].open = 0;
       
+	  free(state_info);
       index = get_state();
    }
 
@@ -335,7 +342,7 @@ void backtrack(int index)
    4. Written 4/19/06.
 */
 {
-   int      i, m, n_stations, previous, *stations;
+/* TODO   int      i, m, n_stations, previous, *stations;
 
    MALLOC(stations, n_tasks+1, int);
    for(i = 1; i <= n_tasks; i++) stations[i] = 0;
@@ -356,7 +363,7 @@ void backtrack(int index)
    i = check_solution(stations, n_stations);
    if(i == 0) exit(1);
 
-   free(stations);
+   free(stations);*/
 }
 
 //_________________________________________________________________________________________________
@@ -418,12 +425,14 @@ int check_state(int index)
    int      i, /*idle,*/ j, jj, stop, t_assigned;
    std::int64_t   hash_value;
 
+   backtrackinfo* state_info = get_state_info(index);
+
    // Check the idle time and the hash_value.
 
    hash_value = 0;
    t_assigned = 0;
    for(i = 1; i <= n_tasks; i++) {
-      if(states[index].degrees[i] == -1) {
+      if(state_info->degrees[i] == -1) {
          t_assigned += t[i];
          hash_value += hash_values[i];
       }
@@ -431,31 +440,34 @@ int check_state(int index)
    hash_value = hash_value % HASH_SIZE;
    //idle = cycle * states[index].n_stations - t_assigned;
 
-   if(hash_value != states[index].hash_value) {
+   if(hash_value != state_info->hash_value) {
       printf("hash_value is incorrect\n");
+	  free(state_info);
       return(0);
    }
 
    // Check that the degrees are consistent.
 
    for(i = 1; i <= n_tasks; i++) {
-      if(states[index].degrees[i] >= 0) {
+      if(state_info->degrees[i] >= 0) {
          degree = 0;
          stop = predecessors[i][0];
          for(jj = 1; jj <= stop; jj++) {
             j = predecessors[i][jj];
-            if(states[index].degrees[j] >= 0) {
+            if(state_info->degrees[j] >= 0) {
                degree++;
             }
          }
 
-         if(states[index].degrees[i] != degree) {
+         if(state_info->degrees[i] != degree) {
             printf("degree of node %d is incorrect\n", i);
+			free(state_info);
             return(0);
          }
       }
    }
 
+   free(state_info);
    return(1);
 }
  

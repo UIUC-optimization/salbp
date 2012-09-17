@@ -35,11 +35,6 @@ void reinitialize_states()
 {
    int      i;
 
-   for(i = 0; i <= last_state; i++) {
-      //states[i].n_stations = -1;
-      free(states[i].degrees);
-   }
-
    first_state = 0;
    last_state = -1;
 }
@@ -78,15 +73,15 @@ void store_state(char *degrees, char n_stations, char LB, int idle, long hash_va
 
    search_info.n_states++;
    
-   states[last_state].n_stations = n_stations;
+   // TODO states[last_state].n_stations = n_stations;
    states[last_state].LB = LB;
-   states[last_state].idle = idle;
-   states[last_state].hash_value = hash_value;
+   // TODO states[last_state].idle = idle;
+   // TODO states[last_state].hash_value = hash_value;
    states[last_state].previous = previous;
    states[last_state].open = 1;
-   MALLOC(states[last_state].degrees, n_tasks+1, char);
+   /* TODO MALLOC(states[last_state].degrees, n_tasks+1, char);
    states[last_state].degrees[0] = 0;
-   for(i = 1; i <= n_tasks; i++) states[last_state].degrees[i] = degrees[i];
+   for(i = 1; i <= n_tasks; i++) states[last_state].degrees[i] = degrees[i]; */
    
    search_info.states_cpu += (double) (clock() - start_time) / CLOCKS_PER_SEC;
 }
@@ -121,7 +116,7 @@ int get_state()
 
 void prn_states(int n_stations)
 {
-   int      i, j;
+/* TODO   int      i, j;
 
    for(i = 0; i <= last_state; i++) {
       if(states[i].n_stations == n_stations) {
@@ -133,7 +128,7 @@ void prn_states(int n_stations)
          }
          printf(")\n");
       }
-   }
+   }*/
 }
 
 /*****************************************************************************/
@@ -202,7 +197,8 @@ int find_or_insert(double key, char *degrees, char n_stations, char LB, int idle
 
    // Do not perform the search if the hash table is full.
 
-   if (n_in_hash_table >= HASH_SIZE - 1) {
+   if (n_in_hash_table >= HASH_SIZE - 1) 
+   {
       verified_optimality = 0;
       fprintf(stderr, "Hash table is full\n");
       exit(1);
@@ -212,44 +208,52 @@ int find_or_insert(double key, char *degrees, char n_stations, char LB, int idle
 
    hash_index = hash_value;
    assert((0 <= hash_index) && (hash_index < HASH_SIZE));
-   while ((index = hash_table[hash_index].index) != -1) {
-      if (memcmp(states[index].degrees+1, degrees+1, n_tasks) == 0) {
-         if(n_stations < states[index].n_stations) {
+   while ((index = hash_table[hash_index].index) != -1) 
+   {
+	  backtrackinfo* state_info = get_state_info(index);
+      if (memcmp(state_info->degrees+1, degrees+1, n_tasks) == 0) 
+	  {
+         if (n_stations < state_info->n_stations) 
+		 {
+			// TODO
             states[index].n_stations = n_stations;
-			   states[index].hash_value = hash_value;
-			   states[index].previous = previous;
+			states[index].hash_value = hash_value;
+			states[index].previous = previous;
             *status = 3;
-            if((states[index].open == 0) && (method == 1)) {
+
+            if ((states[index].open == 0) && (method == 1)) 
+			{
                //printf("   State uses fewer stations\n");
-               switch (search_strategy) {
+               switch (search_strategy) 
+			   {
                   case 1:  insert(&dbfs_heaps[n_stations], heap_sizes + n_stations, key, degrees, n_stations, LB, idle, hash_value, previous, 0); break;
                   case 2:  insert(&bfs_heap, heap_sizes, key, degrees, n_stations, LB, idle, hash_value, previous, 0); break;
                   default: fprintf(stderr,"Unknown search_strategy in find_or_insert\n"); exit(1); break;
                }
             }
-         } else if(n_stations == states[index].n_stations) {
+         } 
+		 else if(n_stations == states[index].n_stations) 
             *status = 2;
-         } else {
+         else 
             *status = 1;
-         }
          search_info.find_insert_cpu += (double) (clock() - start_time) / CLOCKS_PER_SEC;
          return(index);
-      } else {
-         hash_index = (hash_index + 1) % HASH_SIZE;
-      }
+      } 
+	  else hash_index = (hash_index + 1) % HASH_SIZE;
    }
 
    // The state was not found, so insert it into states.
 
-   if(method == 1) {
-      switch (search_strategy) {
+   if (method == 1) 
+   {
+      switch (search_strategy) 
+	  {
          case 1:  insert(&dbfs_heaps[n_stations], heap_sizes + n_stations, key, degrees, n_stations, LB, idle, hash_value, previous, 1); break;
          case 2:  insert(&bfs_heap, heap_sizes, key, degrees, n_stations, LB, idle, hash_value, previous, 1); break;
          default: fprintf(stderr,"Unknown search_strategy in find_or_insert\n"); exit(1); break;
       }
-   } else {
-      store_state(degrees, n_stations, LB, idle, hash_value, previous);
-   }
+   else store_state(degrees, n_stations, LB, idle, hash_value, previous);
+
    *status = 0;
    index = last_state;
    hash_table[hash_index].index = index;
@@ -257,7 +261,7 @@ int find_or_insert(double key, char *degrees, char n_stations, char LB, int idle
    n_in_hash_table++;
    
    search_info.find_insert_cpu += (double) (clock() - start_time) / CLOCKS_PER_SEC;
-   return(index);
+   return index;
 }
 
 /*****************************************************************************/
