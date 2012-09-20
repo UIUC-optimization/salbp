@@ -50,7 +50,9 @@ typedef struct searchinfo {
 } searchinfo, *search_infopnt;
 
 typedef struct state {
-   char* local_degrees; 
+   char* assigned_tasks;
+   char  n_assigned_tasks;
+   char  n_stations;
    char  LB;            // The best lower bound computed for this state.
    int   previous;      // Previous state.  Used in backtracking to constuct optimal solution
    char  open;          // = 1 if this state has not been explored yet.
@@ -58,8 +60,8 @@ typedef struct state {
 
 typedef struct backtrackinfo
 {
+	~backtrackinfo() { free(degrees); }
 	char* degrees;
-	char n_stations;
 	int idle;
 	int hash_value;
 } backtrackinfo;
@@ -125,7 +127,6 @@ extern   int      *descending_order;      // descending_order[k] = the task with
 extern   int      *sorted_task_times;     // sorted_task_times[k] = the kth largest processing time.
 extern   int      verified_optimality;    // verified_optimality = 1 (0) if best_first_bbr proved optimality
 extern   int      state_space_exceeded;   // state_spaced_exceeded = 1 (0) if we attempt to store more than STATE_SPACE states
-extern   problem  problems[31];           // Cycle times and upper bounds for benchmark problems
 extern   char     *prob_file;             // problem file
 extern   float    alpha;
 extern   float    beta;
@@ -140,6 +141,7 @@ extern   double   seed;        // -s option: seed for random number generation
 extern	 int CPU_LIMIT;
 extern   int*     heap_sizes;
 extern   clock_t  global_start_time;
+extern char* root_degrees;
 
 
 // Functions in bbr.c

@@ -97,9 +97,9 @@ void bfs_bbr(int upper_bound)
          break;
       }
 
-      if (state_info->n_stations > level) 
+      if (states[index].n_stations > level) 
 	  {
-         level = state_info->n_stations;
+         level = states[index].n_stations;
          printf("%2d %10d %10d\n", level, count, last_state - first_state + 2);
          count = 0;
          //prn_states(level);
@@ -111,7 +111,7 @@ void bfs_bbr(int upper_bound)
          states[index].open = 0;
          count++;
          search_info.n_explored++;
-         station = state_info->n_stations + 1;
+         station = states[index].n_stations + 1;
          idle = state_info->idle;
          hash_value = state_info->hash_value;
          previous = states[index].previous;
@@ -130,7 +130,7 @@ void bfs_bbr(int upper_bound)
       } 
 	  else states[index].open = 0;
       
-	  free(state_info);
+	  delete(state_info);
       index = get_state();
    }
 
@@ -157,7 +157,7 @@ void gen_loads(int depth, int remaining_time, int start, int n_eligible)
       assert((1 <= i) && (i <= n_tasks) && (degrees[i] == 0));
       if(t[i] <= remaining_time) {
          tasks[depth] = i;
-         degrees[i] = -1;
+         degrees[i] = -2;
          n_sub_eligible = n_eligible;
          full_load = 0;
          stop = successors[i][0];
@@ -342,7 +342,7 @@ void backtrack(int index)
    4. Written 4/19/06.
 */
 {
-/* TODO   int      i, m, n_stations, previous, *stations;
+/*   int      i, m, n_stations, previous, *stations;
 
    MALLOC(stations, n_tasks+1, int);
    for(i = 1; i <= n_tasks; i++) stations[i] = 0;
@@ -461,13 +461,13 @@ int check_state(int index)
 
          if(state_info->degrees[i] != degree) {
             printf("degree of node %d is incorrect\n", i);
-			free(state_info);
+			delete(state_info);
             return(0);
          }
       }
    }
 
-   free(state_info);
+   delete(state_info);
    return(1);
 }
  

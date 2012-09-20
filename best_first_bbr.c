@@ -122,7 +122,7 @@ void best_first_bbr(int upper_bound)
    //index = delete_min(dbfs_heaps[0]);
    index = get_min();
    count = 0;
-   while( index >= 0) 
+   while (index >= 0) 
    {
 	  backtrackinfo* state_info = get_state_info(index);
       cpu = (double) (clock() - search_info.start_time) / CLOCKS_PER_SEC;
@@ -144,16 +144,16 @@ void best_first_bbr(int upper_bound)
          n_unassigned = 0;
          for (i = 1; i <= n_tasks; i++) 
 			 if(state_info->degrees[i] >= 0) n_unassigned++;
-         key = ((double)state_info->idle / state_info->n_stations) - 0.02 * n_unassigned;
+         key = ((double)state_info->idle / states[index].n_stations) - 0.02 * n_unassigned;
          printf("%10d %10d %10d %2d %4d %3d %10.3f\n", count, last_state - count + 1, last_state+1, 
-				 state_info->n_stations, state_info->idle, n_tasks - n_unassigned, key);
+				 states[index].n_stations, state_info->idle, n_tasks - n_unassigned, key);
       }
 
       states[index].open = 0;
-      if(states[index].LB < UB) 
+      if (states[index].LB < UB) 
 	  {
          search_info.n_explored++;
-         station = state_info->n_stations + 1;
+         station = states[index].n_stations + 1;
          idle = state_info->idle;
          hash_value = state_info->hash_value;
          previous = index;
@@ -171,14 +171,14 @@ void best_first_bbr(int upper_bound)
          gen_loads2(1, cycle, 1, n_eligible);
       }
       
-      if(root_LB >= UB) 
+      if (root_LB >= UB) 
 	  {
          verified_optimality = 1;
          break;
       }
 
       //index = delete_min(dbfs_heaps[0]);
-	  free(state_info);
+	  delete(state_info);
       index = get_min();
    }
    printf("   verified_optimality = %d; value = %d; cpu = %0.2f\n", verified_optimality, UB, 
@@ -209,7 +209,7 @@ void gen_loads2(int depth, int remaining_time, int start, int n_eligible)
       assert((1 <= i) && (i <= n_tasks) && (degrees[i] == 0));
       if(t[i] <= remaining_time) {
          tasks[depth] = i;
-         degrees[i] = -1;
+         degrees[i] = -2;
          n_sub_eligible = n_eligible;
          full_load = 0;
          stop = successors[i][0];

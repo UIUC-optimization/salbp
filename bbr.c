@@ -51,6 +51,7 @@ double   seed=3.1567;       // -s option: seed for random number generation
 int CPU_LIMIT = 3600;
 int* heap_sizes = NULL;
 clock_t global_start_time;
+char* root_degrees = NULL;
 
 }; // end namespace salb
 
@@ -146,7 +147,6 @@ void usage (char *prog)
 
 void testprob()
 {
-   char     *degrees;
    int      count, graph, i, iter, j, min_n_stations, n_stations, *stations, sum, t_sum, upper_bound;
    int      n_explored, n_generated, n_states;
    double   best_first_cpu, bfs_bbr_cpu, best_hoffman_cpu, hoffman_cpu, total_cpu;
@@ -170,7 +170,7 @@ void testprob()
       //prn_vec(n_predecessors, n_tasks); prn_vec(n_successors, n_tasks); prn_vec(positional_weight, n_tasks);
       compute_descending_order();
 
-      MALLOC(degrees, n_tasks+1, char);
+      MALLOC(root_degrees, n_tasks+1, char);
       t_sum = 0;
       for(i = 1; i <= n_tasks; i++) {
          t_sum += t[i];
@@ -178,16 +178,13 @@ void testprob()
          for(j = 1; j <= n_tasks; j++) {
             if(predecessor_matrix[j][i] == 1) count++;
          }
-         degrees[i] = count;
+         root_degrees[i] = count;
       }
 
       MALLOC(stations, n_tasks+1, int);
 
-      for (iter = 1; iter <= problems[graph].cycle_times[0]; iter++) 
-	  {
          search_info.start_time = clock();
-         cycle = problems[graph].cycle_times[iter];
-         upper_bound = n_tasks;
+         cycle = 1000;
 
          // Use Hoffman type heuristic to find a reasonably good upper bound.
 
@@ -202,7 +199,7 @@ void testprob()
 			{
                for (gimmel = 0; gimmel <= 0.03; gimmel += 0.01) 
 			   {
-                  n_stations = hoffman(degrees, 1000, 1, 5000);
+                  n_stations = hoffman(root_degrees, 1000, 1, 5000);
                   if(n_stations < min_n_stations) 
 				  {
                      min_n_stations = n_stations;
@@ -260,7 +257,6 @@ void testprob()
          }
 
          total_cpu = (double) (clock() - search_info.start_time) / CLOCKS_PER_SEC;
-      }
 
       free(stations);
 
@@ -287,7 +283,7 @@ void testprob()
       free(sorted_task_times);
       free(descending_order);
 
-   free(degrees);
+   free(root_degrees);
 }
 
 /*****************************************************************************/

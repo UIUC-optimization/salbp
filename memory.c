@@ -1,5 +1,7 @@
 #include "bbr.h"
 
+#include <vector>
+
 namespace salb
 {
 
@@ -26,7 +28,7 @@ void initialize_states()
    first_state = 0;
    last_state = -1;
 
-   //for(i = 0; i <= STATE_SPACE; i++) states[i].n_stations = -1;
+   for(i = 0; i <= STATE_SPACE; i++) states[i].n_stations = -1;
 }
 
 //_________________________________________________________________________________________________
@@ -34,6 +36,9 @@ void initialize_states()
 void reinitialize_states()
 {
    int      i;
+
+   for (i = 0; i <= last_state; ++i)
+	   free(states[i].assigned_tasks);
 
    first_state = 0;
    last_state = -1;
@@ -73,15 +78,17 @@ void store_state(char *degrees, char n_stations, char LB, int idle, long hash_va
 
    search_info.n_states++;
    
-   // TODO states[last_state].n_stations = n_stations;
+   states[last_state].n_stations = n_stations;
    states[last_state].LB = LB;
-   // TODO states[last_state].idle = idle;
-   // TODO states[last_state].hash_value = hash_value;
    states[last_state].previous = previous;
    states[last_state].open = 1;
-   /* TODO MALLOC(states[last_state].degrees, n_tasks+1, char);
-   states[last_state].degrees[0] = 0;
-   for(i = 1; i <= n_tasks; i++) states[last_state].degrees[i] = degrees[i]; */
+   std::vector<int> tmp_assigned_tasks; tmp_assigned_tasks.reserve(n_tasks);
+   for(i = 1; i <= n_tasks; i++) 
+	   if (degrees[i] == -2)
+		   tmp_assigned_tasks.push_back(i);
+
+   MALLOC(states[last_state].assigned_tasks, tmp_assigned_tasks.size(), char);
+   states[last_state].n_assigned_tasks = tmp_assigned_tasks.size();
    
    search_info.states_cpu += (double) (clock() - start_time) / CLOCKS_PER_SEC;
 }
@@ -109,6 +116,36 @@ int get_state()
       first_state++;
    }
    return(index);
+}
+
+backtrackinfo* get_state_info(int index)
+{
+	backtrackinfo* ret = new backtrackinfo;
+	MALLOC(ret->degrees, n_tasks + 1, char);
+	memcpy(ret->degrees, root_degrees, n_tasks + 1);
+	ret->idle = 0;
+
+	while (states[index].previous >= 0)
+	{
+		int hash_value = 0;
+		int usedTime = 0;
+		for (int i = 0; i < states[index].n_assigned_tasks; ++i)
+		{
+			int task = states[index].assigned_tasks[i];
+			ret->degrees[task] = -1;
+			usedTime += t[task];
+			hash_value += hash_values[task];
+
+			for (int j = i; j < successors[task][0]; ++j)
+				if (ret->degrees[successors[task][j]] != -1)
+					--ret->degrees[successors[task][j]];
+		}
+		ret->hash_value += hash_value % HASH_SIZE;
+		ret->idle += (cycle - usedTime);
+		index = states[index].previous;
+	}
+
+	return ret;
 }
 
 
@@ -213,11 +250,9 @@ int find_or_insert(double key, char *degrees, char n_stations, char LB, int idle
 	  backtrackinfo* state_info = get_state_info(index);
       if (memcmp(state_info->degrees+1, degrees+1, n_tasks) == 0) 
 	  {
-         if (n_stations < state_info->n_stations) 
+         if (n_stations < states[index].n_stations) 
 		 {
-			// TODO
             states[index].n_stations = n_stations;
-			states[index].hash_value = hash_value;
 			states[index].previous = previous;
             *status = 3;
 
@@ -252,6 +287,7 @@ int find_or_insert(double key, char *degrees, char n_stations, char LB, int idle
          case 2:  insert(&bfs_heap, heap_sizes, key, degrees, n_stations, LB, idle, hash_value, previous, 1); break;
          default: fprintf(stderr,"Unknown search_strategy in find_or_insert\n"); exit(1); break;
       }
+   }
    else store_state(degrees, n_stations, LB, idle, hash_value, previous);
 
    *status = 0;
