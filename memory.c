@@ -89,6 +89,8 @@ void store_state(char *degrees, char n_stations, char LB, int idle, long hash_va
 
    MALLOC(states[last_state].assigned_tasks, tmp_assigned_tasks.size(), char);
    states[last_state].n_assigned_tasks = tmp_assigned_tasks.size();
+   for (int i = 0; i < tmp_assigned_tasks.size(); ++i)
+	   states[last_state].assigned_tasks[i] = tmp_assigned_tasks[i];
    
    search_info.states_cpu += (double) (clock() - start_time) / CLOCKS_PER_SEC;
 }
@@ -123,6 +125,7 @@ backtrackinfo* get_state_info(int index)
 	backtrackinfo* ret = new backtrackinfo;
 	MALLOC(ret->degrees, n_tasks + 1, char);
 	memcpy(ret->degrees, root_degrees, n_tasks + 1);
+	ret->hash_value = 0;
 	ret->idle = 0;
 
 	while (states[index].previous >= 0)
@@ -134,9 +137,9 @@ backtrackinfo* get_state_info(int index)
 			int task = states[index].assigned_tasks[i];
 			ret->degrees[task] = -1;
 			usedTime += t[task];
-			hash_value += hash_values[task];
+			hash_value += hash_values[task] % HASH_SIZE;
 
-			for (int j = i; j < successors[task][0]; ++j)
+			for (int j = 1; j <= successors[task][0]; ++j)
 				if (ret->degrees[successors[task][j]] != -1)
 					--ret->degrees[successors[task][j]];
 		}
@@ -145,6 +148,7 @@ backtrackinfo* get_state_info(int index)
 		index = states[index].previous;
 	}
 
+	ret->hash_value %= HASH_SIZE;
 	return ret;
 }
 

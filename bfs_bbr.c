@@ -440,11 +440,11 @@ int check_state(int index)
    hash_value = hash_value % HASH_SIZE;
    //idle = cycle * states[index].n_stations - t_assigned;
 
-   if(hash_value != state_info->hash_value) {
+   /*if(hash_value != state_info->hash_value) {
       printf("hash_value is incorrect\n");
 	  free(state_info);
       return(0);
-   }
+   }*/
 
    // Check that the degrees are consistent.
 

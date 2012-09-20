@@ -33,7 +33,7 @@ double   *LB2_values;            // LB2_values[j] = the value assigned to task j
 double   *LB3_values;            // LB3_values[j] = the value assigned to task j to use in computing LB3.
 int      *descending_order;      // descending_order[k] = the task with the kth largest processing time.
 int      *sorted_task_times;     // sorted_task_times[k] = the kth largest processing time.
-int      verified_optimality;    // verified_optimality = 1 (0) if best_first_bbr proved optimality
+int      verified_optimality=1;    // verified_optimality = 1 (0) if best_first_bbr proved optimality
 int      state_space_exceeded=0; // state_spaced_exceeded = 1 (0) if we attempt to store more than STATE_SPACE states
 problem  problems[31];           // Cycle times and upper bounds for benchmark problems
 
@@ -185,6 +185,7 @@ void testprob()
       }
 
       MALLOC(stations, n_tasks+1, int);
+	  MALLOC(states, STATE_SPACE+1, state);
 
          search_info.start_time = clock();
          cycle = 1000;
