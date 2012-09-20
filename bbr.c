@@ -76,6 +76,9 @@ int main(int ac, char **av)
    salb::testprob();
 
    cpu = (double) (clock() - salb::global_start_time) / CLOCKS_PER_SEC;
+   printf("   verified_optimality = %d; value = %d; cpu = %0.2f\n", salb::verified_optimality, salb::UB, 
+		   ((double)(clock() - salb::global_start_time)/CLOCKS_PER_SEC));
+   if(salb::verified_optimality == 0) printf("   ************* DID NOT VERIFY OPTIMALITY ************\n");
    printf("Hoffman cpu = %6.2f  best_first_bbr cpu = %6.2f  bfs_bbr cpu = %6.2f find_insert_cpu = %6.2f  bin_cpu = %6.2f  cpu = %6.2f\n", 
            salb::search_info.hoffman_cpu, salb::search_info.best_first_cpu, 
 		   salb::search_info.bfs_bbr_cpu, salb::search_info.find_insert_cpu, 
