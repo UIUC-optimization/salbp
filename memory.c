@@ -93,6 +93,10 @@ void store_state(char *degrees, char n_stations, char LB, int idle, long hash_va
 	   states[last_state].assigned_tasks[i] = tmp_assigned_tasks[i];
    
    search_info.states_cpu += (double) (clock() - start_time) / CLOCKS_PER_SEC;
+
+   backtrackinfo* state_info = get_state_info(last_state);
+   assert(state_info->hash_value == hash_value);
+   delete state_info;
 }
 
 //_________________________________________________________________________________________________
@@ -130,7 +134,7 @@ backtrackinfo* get_state_info(int index)
 
 	while (states[index].previous >= 0)
 	{
-		int hash_value = 0;
+		unsigned int hash_value = 0;
 		int usedTime = 0;
 		for (int i = 0; i < states[index].n_assigned_tasks; ++i)
 		{

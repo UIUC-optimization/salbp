@@ -63,7 +63,7 @@ typedef struct backtrackinfo
 	~backtrackinfo() { free(degrees); }
 	char* degrees;
 	int idle;
-	int hash_value;
+	unsigned int hash_value;
 } backtrackinfo;
 
 typedef struct hash_record {
