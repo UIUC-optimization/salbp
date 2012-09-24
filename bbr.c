@@ -28,12 +28,12 @@ int      *t;                     // t[i] = processing time of task i
 int      *n_successors;          // n_successors[i] = number of successors of i in closed graph.
 int      *n_predecessors;        // n_predecessors[i] = number of predecessors of i in closed graph.
 int      *positional_weight;     // positional_weight[i] = t[i] + sum(t[j]: j is a successor of i).
-unsigned long 	 *hash_values;           // hash_values(j) = hash value assigned to task j.
+int		 *hash_values;           // hash_values(j) = hash value assigned to task j.
 double   *LB2_values;            // LB2_values[j] = the value assigned to task j to use in computing LB2.
 double   *LB3_values;            // LB3_values[j] = the value assigned to task j to use in computing LB3.
 int      *descending_order;      // descending_order[k] = the task with the kth largest processing time.
 int      *sorted_task_times;     // sorted_task_times[k] = the kth largest processing time.
-int      verified_optimality;    // verified_optimality = 1 (0) if best_first_bbr proved optimality
+int      verified_optimality=1;    // verified_optimality = 1 (0) if best_first_bbr proved optimality
 int      state_space_exceeded=0; // state_spaced_exceeded = 1 (0) if we attempt to store more than STATE_SPACE states
 problem  problems[31];           // Cycle times and upper bounds for benchmark problems
 
@@ -51,6 +51,7 @@ double   seed=3.1567;       // -s option: seed for random number generation
 int CPU_LIMIT = 3600;
 int* heap_sizes = NULL;
 clock_t global_start_time;
+char* root_degrees = NULL;
 
 }; // end namespace salb
 
@@ -72,12 +73,12 @@ int main(int ac, char **av)
    salb::parseargs (ac, av);
    if (salb::prn_info > 0) printf("%s start at %s\n", av[ac-1], ctime(&current_time));
 
-   //salb::bin_testprob();
    salb::testprob();
-   //salb::define_problems();
-   //salb::benchmarks(salb::prob_file);
 
    cpu = (double) (clock() - salb::global_start_time) / CLOCKS_PER_SEC;
+   printf("   verified_optimality = %d; value = %d; cpu = %0.2f\n", salb::verified_optimality, salb::UB, 
+		   ((double)(clock() - salb::global_start_time)/CLOCKS_PER_SEC));
+   if(salb::verified_optimality == 0) printf("   ************* DID NOT VERIFY OPTIMALITY ************\n");
    printf("Hoffman cpu = %6.2f  best_first_bbr cpu = %6.2f  bfs_bbr cpu = %6.2f find_insert_cpu = %6.2f  bin_cpu = %6.2f  cpu = %6.2f\n", 
            salb::search_info.hoffman_cpu, salb::search_info.best_first_cpu, 
 		   salb::search_info.bfs_bbr_cpu, salb::search_info.find_insert_cpu, 
@@ -147,22 +148,65 @@ void usage (char *prog)
 
 /*****************************************************************************/
 
-void benchmarks(const char* filename)
+void testprob()
 {
-   char     *degrees;
    int      count, graph, i, iter, j, min_n_stations, n_stations, *stations, sum, t_sum, upper_bound;
    int      n_explored, n_generated, n_states;
    double   best_first_cpu, bfs_bbr_cpu, best_hoffman_cpu, hoffman_cpu, total_cpu;
    clock_t  start_time;
 
    sum = 0;
-//   for(graph = 24; graph <= 24; graph++) {
-      read_problem(filename);
-      //prn_problem();
+      read_problem(prob_file);
 
-      if ((graph == 2) || (graph == 3) || (graph == 8) || (graph == 11) || (graph == 13) || (graph == 16) || (graph == 19) || (graph == 21) || (graph == 23) || (graph == 25) || (graph == 26) || (graph == 27) || (graph == 28) || (graph == 30)) {
-         reverse_pred();
+      cycle = 1000;
+         int bound = n_tasks;
+
+         close_pred();
+
+      std::vector<int> E(n_tasks + 1);
+      std::vector<int> L(n_tasks + 1);
+      // Determine whether to run in forward or reverse
+      for (int j = 1; j <= n_tasks; ++j)
+      {
+          double ftime = t[j];
+          double rtime = t[j];
+          for (int i = 1; i <= n_tasks; ++i)
+          {
+              if (closed_predecessor_matrix[i][j]) ftime += t[i];       // If task i precedes task j
+              if (closed_predecessor_matrix[j][i]) rtime += t[i];       // If task j precedes task i
+          }
+
+          E[j] = ceil(ftime/cycle);
+          L[j] = bound - rtime + 1;
       }
+
+      int f = 1;
+      int r = 1;
+      for (int m = 1; m <= 5; ++m)
+      {
+          int fcount = 0;
+          int rcount = 0;
+          for (int j = 1; j <= n_tasks; ++j)
+          {
+              if (E[j] <= m) ++fcount;
+              if (L[j] >= bound - m + 1) ++rcount;
+          }
+
+          f *= fcount;
+          r *= rcount;
+      }
+
+      if (r < f)
+      {
+          printf("running in reverse\n");
+          reverse_pred();
+      }
+
+
+      /* TODO Logic to determine when to call reverse
+	  if ((graph == 2) || (graph == 3) || (graph == 8) || (graph == 11) || (graph == 13) || (graph == 16) || (graph == 19) || (graph == 21) || (graph == 23) || (graph == 25) || (graph == 26) || (graph == 27) || (graph == 28) || (graph == 30)) {
+         reverse_pred();
+      }*/
       find_successors();
       //prn_successors();
       close_pred();
@@ -173,7 +217,7 @@ void benchmarks(const char* filename)
       //prn_vec(n_predecessors, n_tasks); prn_vec(n_successors, n_tasks); prn_vec(positional_weight, n_tasks);
       compute_descending_order();
 
-      MALLOC(degrees, n_tasks+1, char);
+      MALLOC(root_degrees, n_tasks+1, char);
       t_sum = 0;
       for(i = 1; i <= n_tasks; i++) {
          t_sum += t[i];
@@ -181,48 +225,14 @@ void benchmarks(const char* filename)
          for(j = 1; j <= n_tasks; j++) {
             if(predecessor_matrix[j][i] == 1) count++;
          }
-         degrees[i] = count;
+         root_degrees[i] = count;
       }
 
-/*
-      initialize_hoffman();
-
-      for(iter = 1; iter <= problems[graph].cycle_times[0]; iter++) {
-         printf("%2d %3d %5d %2d ", graph, n_tasks, problems[graph].cycle_times[iter], problems[graph].upper_bounds[iter]);
-         cycle = problems[graph].cycle_times[iter];
-         min_n_stations = BIG_INT;
-         for(alpha = 0.000; alpha <= 0.02; alpha += 0.005) {
-            for(beta = 0.000; beta <= 0.02; beta += 0.005) {
-               for(gimmel = 0; gimmel <= 0.03; gimmel += 0.01) {
-                  n_stations = hoffman(degrees, 1000, 1, 5000);
-                  if(n_stations < min_n_stations) min_n_stations = n_stations;
-               }
-            }
-         }
-         sum += min_n_stations - problems[graph].upper_bounds[iter];
-         printf("%2d %2d\n", min_n_stations, min_n_stations - problems[graph].upper_bounds[iter]);
-      }
-
-      free_hoffman();
-*/
-
-      //initialize_anneal();
       MALLOC(stations, n_tasks+1, int);
+	  MALLOC(states, STATE_SPACE+1, state);
 
-
-      for(iter = 1; iter <= problems[graph].cycle_times[0]; iter++) {
-         //if((graph == 24) && ((iter == 17) || (iter == 18) || (iter == 19) || (iter == 20) || (iter == 21) || (iter == 22) || (iter == 23))) continue;
-         if((graph == 24) && ((iter == 17) || (iter == 18) || (iter == 19) || (iter == 20) || (iter == 21) || (iter == 22))) continue;
-         //if((graph == 29) && ((iter == 2) || (iter == 3) || (iter == 7))) continue;
-         //if((graph == 30) && ((iter == 1) || (iter == 3) || (iter == 4) || (iter == 5) || (iter == 7) || (iter == 9) || (iter == 11) || (iter == 12) || (iter == 13) || (iter == 14) || (iter == 15) || (iter == 16))) continue;
          search_info.start_time = clock();
-         printf("%2d %3d %5d %2d \n", graph, n_tasks, problems[graph].cycle_times[iter], problems[graph].upper_bounds[iter]);
-         cycle = problems[graph].cycle_times[iter];
-         //upper_bound = problems[graph].upper_bounds[iter] + 1;
-         //if(upper_bound > n_tasks) upper_bound = n_tasks;
-         upper_bound = n_tasks;
-
-         //LB3b();
+         cycle = 1000;
 
          // Use Hoffman type heuristic to find a reasonably good upper bound.
 
@@ -231,11 +241,15 @@ void benchmarks(const char* filename)
          initialize_hoffman();
 
          min_n_stations = BIG_INT;
-         for(alpha = 0.000; alpha <= 0.02; alpha += 0.005) {
-            for(beta = 0.000; beta <= 0.02; beta += 0.005) {
-               for(gimmel = 0; gimmel <= 0.03; gimmel += 0.01) {
-                  n_stations = hoffman(degrees, 1000, 1, 5000);
-                  if(n_stations < min_n_stations) {
+         for (alpha = 0.000; alpha <= 0.02; alpha += 0.005) 
+		 {
+            for (beta = 0.000; beta <= 0.02; beta += 0.005) 
+			{
+               for (gimmel = 0; gimmel <= 0.03; gimmel += 0.01) 
+			   {
+                  n_stations = hoffman(root_degrees, 1000, 1, 5000);
+                  if(n_stations < min_n_stations) 
+				  {
                      min_n_stations = n_stations;
                      best_hoffman_cpu = (double) (clock() - start_time) / CLOCKS_PER_SEC;
                   }
@@ -248,7 +262,6 @@ void benchmarks(const char* filename)
          free_hoffman();
          hoffman_cpu = (double) (clock() - start_time) / CLOCKS_PER_SEC;
 
-
          compute_LB2_values();
          compute_LB3_values();
          best_first_cpu = 0.0;
@@ -256,19 +269,16 @@ void benchmarks(const char* filename)
          n_explored = 0;
          n_generated = 0;
          n_states = 0;
-         if(ceil((double) t_sum / (double) cycle) < upper_bound) {
 
-            //gen_initial_assignment(cycle, stations, upper_bound);
-            //best_cycle = sim_anneal(cycle, stations, upper_bound, 2000000, 0.99999, 10*cycle);
-            //printf("%5d ", best_cycle); if(best_cycle <= cycle) printf("0\n"); else printf("1\n");
-
-            //initialize_bfs_bbr();
-            //bfs_bbr(upper_bound);
-
+         if (ceil((double) t_sum / (double) cycle) < upper_bound) 
+		 {
             start_time = clock();
             initialize_best_first_bbr();
-            if(bin_pack_lb == 1) initialize_bin_packing();
+
+            if (bin_pack_lb == 1) 
+				initialize_bin_packing();
             best_first_bbr(upper_bound);
+
             n_explored = search_info.n_explored;
             n_generated = search_info.n_generated;
             n_states = search_info.n_states;
@@ -276,38 +286,36 @@ void benchmarks(const char* filename)
             search_info.n_generated = 0;
             search_info.n_states = 0;
             free_heaps();
-		      free_best_first_bbr();
+		    free_best_first_bbr();
             reinitialize_states();
-            if((verified_optimality != 0) && (bin_pack_lb == 1)) free_bin_packing();
+            if ((verified_optimality != 0) && (bin_pack_lb == 1)) 
+				free_bin_packing();
             best_first_cpu = (double) (clock() - start_time) / CLOCKS_PER_SEC;
 
-            if(verified_optimality == 0) {
+            if (verified_optimality == 0) 
+			{
                start_time = clock();
                initialize_bfs_bbr();
                bfs_bbr(upper_bound);
                free_bfs_bbr();
-               if(bin_pack_lb == 1) free_bin_packing();
+               if (bin_pack_lb == 1) 
+				   free_bin_packing();
                bfs_bbr_cpu = (double) (clock() - start_time) / CLOCKS_PER_SEC;
             }
-            //if(bin_pack_lb == 1) printf("n_in_bin_hash_table = %8d\n", get_n_in_bin_hash_table());
          }
 
          total_cpu = (double) (clock() - search_info.start_time) / CLOCKS_PER_SEC;
-         printf("%2d %3d %5d %2d ", graph, n_tasks, problems[graph].cycle_times[iter], problems[graph].upper_bounds[iter]);
-         printf("%2d %2d %7d %9d %7d ", min_n_stations, UB, n_explored, n_generated, n_states);
-         printf("%7d %9d %7d ", search_info.n_explored, search_info.n_generated, search_info.n_states);
-         printf("%6.2f %6.2f %6.2f %6.2f %6.2f\n", best_hoffman_cpu, hoffman_cpu, best_first_cpu, bfs_bbr_cpu, total_cpu);
-      }
 
-      //free_anneal();
       free(stations);
 
-      for(j = 1; j <= n_tasks; j++) {
+      for(j = 1; j <= n_tasks; j++) 
+	  {
          free(predecessor_matrix[j]);
          free(closed_predecessor_matrix[j]);
          free(potentially_dominates[j]);
          free(successors[j]);
       }
+
       free(predecessor_matrix);
       free(closed_predecessor_matrix);
       free(potentially_dominates);
@@ -322,144 +330,8 @@ void benchmarks(const char* filename)
       free(LB3_values);
       free(sorted_task_times);
       free(descending_order);
-   //}
 
-   free(degrees);
-   printf("%2d\n", sum);
-}
-
-//_________________________________________________________________________________________________
-
-void testprob()
-{
-   char     *degrees;
-   int      count, i, j, upper_bound;
-   
-   read_problem(prob_file);
-   //prn_problem();
-   if(prn_info > 1) prn_problem();
-
-   //reverse_pred();
-   find_successors();
-   //prn_successors();
-   close_pred();
-   //prn_pred(closed_predecessor_matrix);
-   compute_potentially_dominates();
-   //prn_pred(potentially_dominates);
-   compute_positional_weights();
-   //prn_vec(n_predecessors, n_tasks); prn_vec(n_successors, n_tasks); prn_vec(positional_weight, n_tasks);
-
-   cycle = 1000;
-   //upper_bound = 33;
-   MALLOC(degrees, n_tasks+1, char);
-   for(i = 1; i <= n_tasks; i++) {
-      count = 0;
-      for(j = 1; j <= n_tasks; j++) {
-         if(predecessor_matrix[j][i] == 1) count++;
-      }
-      degrees[i] = count;
-   }
-
-   MALLOC(states, STATE_SPACE+1, state);
-   compute_descending_order();
-   compute_LB2_values();
-   compute_LB3_values();
-
-         double start_time = clock();
-         double best_hoffman_cpu = 0.0;
-         initialize_hoffman();
-
-         int min_n_stations = BIG_INT;
-         for(alpha = 0.000; alpha <= 0.02; alpha += 0.005) {
-            for(beta = 0.000; beta <= 0.02; beta += 0.005) {
-               for(gimmel = 0; gimmel <= 0.03; gimmel += 0.01) {
-                  int n_stations = hoffman(degrees, 1000, 1, 5000);
-                  if(n_stations < min_n_stations) {
-                     min_n_stations = n_stations;
-                     best_hoffman_cpu = (double) (clock() - start_time) / CLOCKS_PER_SEC;
-                  }
-               }
-            }
-         }
-         
-         upper_bound = min_n_stations;
-         UB = min_n_stations;
-         free_hoffman();
-         double hoffman_cpu = (double) (clock() - start_time) / CLOCKS_PER_SEC;
-/*
-   initialize_hoffman();
-   for(alpha = 0.001; alpha < 0.02; alpha += 0.001) {
-      for(beta = 0.001; beta < 0.02; beta += 0.001) {
-         hoffman(degrees, 1000, 1, 10000);
-      }
-   }
-*/
-
-   //initialize_anneal();
-   //MALLOC(stations, n_tasks+1, int);
-   //for(i = 1; i <= n_tasks; i++) stations[i] = 1;
-   //gen_initial_assignment(cycle, stations, upper_bound);
-   //sim_anneal(cycle, stations, upper_bound, 10000000, 0.99999, 10*cycle);
-
-   //initialize_bfs_bbr();
-   initialize_bin_packing();
-   //bfs_bbr(upper_bound);
-
-   initialize_best_first_bbr();
-   best_first_bbr(upper_bound);
-
-   free(degrees);
-   free_bin_packing();
-}
-
-//_________________________________________________________________________________________________
-
-void bin_testprob()
-{
-   char     *degrees;
-   int      count, i, j; //, upper_bound;
-   short    *items;
-   
-   read_problem(prob_file);
-   //prn_problem();
-   if(prn_info > 1) prn_problem();
-
-   //reverse_pred();
-   find_successors();
-   //prn_successors();
-   close_pred();
-   //prn_pred(closed_predecessor_matrix);
-   compute_potentially_dominates();
-   //prn_pred(potentially_dominates);
-   compute_positional_weights();
-   //prn_vec(n_predecessors, n_tasks); prn_vec(n_successors, n_tasks); prn_vec(positional_weight, n_tasks);
-
-   cycle = 1000;
-   //upper_bound = 33;
-   MALLOC(degrees, n_tasks+1, char);
-   for(i = 1; i <= n_tasks; i++) {
-      count = 0;
-      for(j = 1; j <= n_tasks; j++) {
-         if(predecessor_matrix[j][i] == 1) count++;
-      }
-      degrees[i] = count;
-   }
-   compute_descending_order();
-   compute_LB2_values();
-   compute_LB3_values();
-
-   initialize_bfs_bbr();
-   initialize_bin_packing();
-
-   MALLOC(items, n_tasks+1, short);
-   for(i = 1; i <= n_tasks; i++) items[i] = descending_order[i];
-   items[0] = n_tasks;
-   bin_dfs_bbr(items);
-   //bfs_bbr(upper_bound);
-   //prn_bin_hash_table();
-
-   free(degrees);
-   free_bin_packing();
+   free(root_degrees);
 }
 
 /*****************************************************************************/
@@ -903,60 +775,6 @@ int LB3b()
 }
 
 /*****************************************************************************/
-
-void define_problems()
-{
-   int      i;
-   problem  probs[31] = 
-   {
-	   {"", {0}, {0}},
-	   {"c:\\sewell\\research\\assembly\\data\\bowman8.in2", {1, 20}, {1, 5}},
-       {"c:\\sewell\\research\\assembly\\data\\mansoor.in2", {3, 48, 62, 94}, {3, 4, 3, 2}},
-      {"c:\\sewell\\research\\assembly\\data\\mertens.in2", {6, 6, 7, 8, 10, 15, 18}, {6, 6, 5, 5,  3,  2,  2}},
-      {"c:\\sewell\\research\\assembly\\data\\jaeschke.in2", {5, 6, 7, 8, 10, 18}, {5, 8, 7, 6,  4,  3}},
-      {"c:\\sewell\\research\\assembly\\data\\jackson.in2", {6, 7, 9, 10, 13, 14, 21}, {6, 8, 6,  5,  4,  4,  3}},
-      {"c:\\sewell\\research\\assembly\\data\\mitchell.in2", {6, 14, 15, 21, 26, 35, 39}, {6, 8,  8,  5,  5,  3,  3}},
-      {"c:\\sewell\\research\\assembly\\data\\heskia.in2", {6, 138, 205, 216, 256, 324, 342}, {6,  8,   5,   5,   4,   4,   3}},
-      {"c:\\sewell\\research\\assembly\\data\\sawyer30.in2", {7, 25, 27, 30, 36, 41, 54, 75}, {7, 14, 13, 12, 10,  8,  7,  5}},
-      {"c:\\sewell\\research\\assembly\\data\\kilbrid.in2", {6, 57, 79, 92, 110, 138, 184}, {6, 10,  7,  6,   6,   4,   3}},
-      {"c:\\sewell\\research\\assembly\\data\\tonge70.in2", {5, 176, 364, 410, 468, 527}, {5, 21,   10,   9,   8,   7}},
-      {"c:\\sewell\\research\\assembly\\data\\arc83.in2", {7, 5048, 5853, 6842, 7571, 8412, 8898, 10816}, {7, 16, 14, 12, 11, 10, 9, 8}},
-      {"c:\\sewell\\research\\assembly\\data\\arc111.in2", {6, 5755, 8847, 10027, 10743, 11378, 17067}, {6, 27, 18, 16, 15, 14, 9}},
-      {"c:\\sewell\\research\\assembly\\data\\sawyer30.in2", {7, 27, 30, 33, 36, 41, 47, 54}, {7, 13, 12, 11, 10,  8,  7,  7}},
-      {"c:\\sewell\\research\\assembly\\data\\kilbrid.in2", {6, 56, 62, 69, 79, 92, 111}, {6, 10,  9,  8,  7,  6,   5}},
-      {"c:\\sewell\\research\\assembly\\data\\tonge70.in2", {12, 160, 168, 176, 185, 195, 207, 220, 234, 251, 270, 293, 320}, {12, 23, 22, 21, 20, 19, 18, 17, 16, 14, 14, 13, 11}},
-      {"c:\\sewell\\research\\assembly\\data\\arc83.in2", {11, 3786, 3985, 4206, 4454, 4732, 5048, 5408, 5824, 6309, 6883, 7571}, {11, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11}},
-      {"c:\\sewell\\research\\assembly\\data\\arc111.in2", {14, 5785, 6016, 6267, 6540, 6837, 7162, 7520, 7916, 8356, 8847, 9400, 10027, 10743, 11570}, {14, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 13}},
-      {"c:\\sewell\\research\\assembly\\data\\roszieg.in2", {6, 14, 16, 18, 21, 25, 32}, {6, 10,  8,  8,  6,  6,  4}},
-      {"c:\\sewell\\research\\assembly\\data\\buxey.in2", {7, 27, 30, 33, 36, 41, 47, 54}, {7, 13, 12, 11, 10,  8,  7,  7}},
-      {"c:\\sewell\\research\\assembly\\data\\lutz1.in2", {6, 1414, 1572, 1768, 2020, 2357, 2828}, {6, 11, 10, 9, 8, 7, 6}},
-      {"c:\\sewell\\research\\assembly\\data\\gunther.in2", {7, 41, 44, 49, 54, 61, 69, 81}, {7, 14, 12, 11,  9,  9,  8,  7}},
-      {"c:\\sewell\\research\\assembly\\data\\hahn.in2", {5, 2004, 2338, 2806, 3507, 4676}, {5, 8, 7, 6, 5, 4}},
-      {"c:\\sewell\\research\\assembly\\data\\warnecke.in2", {16, 54, 56, 58, 60, 62, 65, 68, 71, 74, 78, 82, 86, 92, 97, 104, 111}, {16, 31, 29, 29, 27, 27, 25, 24, 23, 22, 21, 20, 19, 17, 17,  15,  14}},
-      {"c:\\sewell\\research\\assembly\\data\\wee-mag.in2", {24, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 45, 46, 47, 49, 50, 52, 54, 56}, {24, 63, 63, 62, 62, 61, 61, 61, 60, 60, 60, 60, 60, 60, 59, 55, 50, 38, 34, 33, 32, 32, 31, 31, 30}},
-      {"c:\\sewell\\research\\assembly\\data\\lutz2.in2", {11, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21}, {11, 49, 44, 40, 37, 34, 31, 29, 28, 26, 25, 24}},
-      {"c:\\sewell\\research\\assembly\\data\\lutz3.in2", {12, 75, 79, 83, 87, 92, 97, 103, 110, 118, 127, 137, 150}, {12, 23, 22, 21, 20, 19, 18,  17,  15,  14,  14,  13,  12}},
-      {"c:\\sewell\\research\\assembly\\data\\mukherje.in2", {13, 176, 183, 192, 201, 211, 222, 234, 248, 263, 281, 301, 324, 351}, {13, 25,  24,  23,  22,  21,  20,  19,  18,  17,  16,  15,  14,  13}},
-      {"c:\\sewell\\research\\assembly\\data\\barthold.in2", {8, 403, 434, 470, 513, 564, 626, 705, 805}, {8, 14,  13,  12,  11,  10,   9,   8,   7}},
-      {"c:\\sewell\\research\\assembly\\data\\barthol2.in2", {27, 84, 85, 87, 89, 91, 93, 95, 97, 99, 101, 104, 106, 109, 112, 115, 118, 121, 125, 129, 133, 137, 142, 146, 152, 157, 163, 170}, {27, 51, 50, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25}},
-      {"c:\\sewell\\research\\assembly\\data\\scholl.in2", {26, 1394, 1422, 1452, 1483, 1515, 1548, 1584, 1620, 1659, 1699, 1742, 1787, 1834, 1883, 1935, 1991, 2049, 2111, 2177, 2247, 2322, 2402, 2488, 2580, 2680, 2787}, {26, 50, 50, 48, 47, 46, 46, 44, 44, 42, 42, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25}}
-   };
-
-   for(i = 0; i <31; i++) {
-      problems[i] = probs[i];
-   }
-/*
-   for(i = 0; i < 31; i++) {
-      printf("%15s [", problems[i].file_name);
-      for(j = 1; j <= problems[i].cycle_times[0];j++)  printf("%4d ", problems[i].cycle_times[j]);
-      printf("] [");
-      for(j = 1; j <= problems[i].upper_bounds[0];j++) printf("%4d ", problems[i].upper_bounds[j]);
-      printf("]\n");
-   }
-*/
-}
-
-/*************************************************************************************************/
 
 int sum(int *x, short *indices)
 /*
