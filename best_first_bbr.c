@@ -116,6 +116,7 @@ void best_first_bbr(int upper_bound)
    if(root_LB < UB) 
       index = find_or_insert(0.0, degrees, 0, 0, 0, 0, -1, 1, &status);
 
+
    // Main loop
 
    //printf("maximum idle time = %d\n", cycle*(UB-1) - t_sum);

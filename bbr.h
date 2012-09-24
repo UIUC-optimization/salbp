@@ -197,7 +197,7 @@ int check_stations(char *deg, short *stations, int *start_station, int n_station
 
 void initialize_states();
 void reinitialize_states();
-void store_state(char *degrees, char n_stations, char LB, int idle, unsigned int hash_value, int previous, const std::vector<int>& tmp_assigned_tasks);
+void store_state(char *degrees, char n_stations, char LB, int previous, const std::vector<int>& tmp_assigned_tasks);
 int get_state();
 backtrackinfo* get_state_info(int index);
 void prn_states(int n_stations);
@@ -208,7 +208,7 @@ void reinitialize_heaps();
 void free_heaps();
 int get_min();
 int delete_min(heap_record *heap);
-void insert(heap_record** heap, int* heap_size, double key, char *degrees, char n_stations, char LB, int idle, long hash_value, int previous, int add_to_states, const std::vector<int>& tmp_assigned_tasks);
+void insert(heap_record** heap, int* heap_size, double key, char *degrees, char n_stations, char LB, int previous, int add_to_states, const std::vector<int>& tmp_assigned_tasks);
 void siftup(heap_record *heap, int k);
 void siftdown(heap_record *heap, int k);
 

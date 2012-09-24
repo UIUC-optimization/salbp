@@ -46,7 +46,7 @@ void reinitialize_states()
 
 //_________________________________________________________________________________________________
 
-void store_state(char *degrees, char n_stations, char LB, int idle, unsigned int hash_value, int previous, const std::vector<int>& tmp_assigned_tasks)
+void store_state(char *degrees, char n_stations, char LB, int previous, const std::vector<int>& tmp_assigned_tasks)
 /*
    1. This routine stores a new state in the array states.
       a. It stores it in the next available position, which is determined
@@ -63,7 +63,6 @@ void store_state(char *degrees, char n_stations, char LB, int idle, unsigned int
 
    assert((-1 <= previous) && (previous <= STATE_SPACE));
    assert((0 <= n_stations) && (n_stations <= n_tasks));
-   assert((0 <= hash_value) && (hash_value < HASH_SIZE));
 
    last_state++;
    if (last_state >= STATE_SPACE) {
@@ -89,10 +88,6 @@ void store_state(char *degrees, char n_stations, char LB, int idle, unsigned int
 	   states[last_state].assigned_tasks[i] = tmp_assigned_tasks[i];
    
    search_info.states_cpu += (double) (clock() - start_time) / CLOCKS_PER_SEC;
-
-   backtrackinfo* state_info = get_state_info(last_state);
-   assert(state_info->hash_value == hash_value);
-   delete state_info;
 }
 
 //_________________________________________________________________________________________________
@@ -281,8 +276,8 @@ int find_or_insert(double key, char *degrees, char n_stations, char LB, int idle
                //printf("   State uses fewer stations\n");
                switch (search_strategy) 
 			   {
-                  case 1:  insert(&dbfs_heaps[n_stations], heap_sizes + n_stations, key, degrees, n_stations, LB, idle, hash_value, previous, 0, tmp_assigned_tasks); break;
-                  case 2:  insert(&bfs_heap, heap_sizes, key, degrees, n_stations, LB, idle, hash_value, previous, 0, tmp_assigned_tasks); break;
+                  case 1:  insert(&dbfs_heaps[n_stations], heap_sizes + n_stations, key, degrees, n_stations, LB, previous, 0, tmp_assigned_tasks); break;
+                  case 2:  insert(&bfs_heap, heap_sizes, key, degrees, n_stations, LB, previous, 0, tmp_assigned_tasks); break;
                   default: fprintf(stderr,"Unknown search_strategy in find_or_insert\n"); exit(1); break;
                }
             }
@@ -302,12 +297,12 @@ int find_or_insert(double key, char *degrees, char n_stations, char LB, int idle
    {
       switch (search_strategy) 
 	  {
-         case 1:  insert(&dbfs_heaps[n_stations], heap_sizes + n_stations, key, degrees, n_stations, LB, idle, hash_value, previous, 1, tmp_assigned_tasks); break;
-         case 2:  insert(&bfs_heap, heap_sizes, key, degrees, n_stations, LB, idle, hash_value, previous, 1, tmp_assigned_tasks); break;
+         case 1:  insert(&dbfs_heaps[n_stations], heap_sizes + n_stations, key, degrees, n_stations, LB, previous, 1, tmp_assigned_tasks); break;
+         case 2:  insert(&bfs_heap, heap_sizes, key, degrees, n_stations, LB, previous, 1, tmp_assigned_tasks); break;
          default: fprintf(stderr,"Unknown search_strategy in find_or_insert\n"); exit(1); break;
       }
    }
-   else store_state(degrees, n_stations, LB, idle, hash_value, previous, tmp_assigned_tasks);
+   else store_state(degrees, n_stations, LB, previous, tmp_assigned_tasks);
 
    *status = 0;
    index = last_state;
@@ -461,7 +456,7 @@ int delete_min(heap_record *heap)
 
 //_________________________________________________________________________________________________
 
-void insert(heap_record** heap, int* heap_size, double key, char *degrees, char n_stations, char LB, int idle, long hash_value, int previous, int add_to_states, const std::vector<int>& tmp_assigned_tasks)
+void insert(heap_record** heap, int* heap_size, double key, char *degrees, char n_stations, char LB, int previous, int add_to_states, const std::vector<int>& tmp_assigned_tasks)
 /*
    1. This function inserts a state into the heap and calls store_state to add it to the list of states.
    2. add_to_states = 1 indicates that store_state should be called.
@@ -491,7 +486,7 @@ void insert(heap_record** heap, int* heap_size, double key, char *degrees, char 
    n_in_heap++;
    (*heap)[0].index = n_in_heap;
    (*heap)[n_in_heap].key = key;
-   if (add_to_states) store_state(degrees, n_stations, LB, idle, hash_value, previous, tmp_assigned_tasks);
+   if (add_to_states) store_state(degrees, n_stations, LB, previous, tmp_assigned_tasks);
    (*heap)[n_in_heap].index = last_state;
    siftup(*heap, n_in_heap);
 }
