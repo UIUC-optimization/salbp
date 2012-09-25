@@ -291,10 +291,15 @@ int find_or_insert(double key, char *degrees, char n_stations, char LB, int idle
          else *status = 1;
 
          search_info.find_insert_cpu += (double) (clock() - start_time) / CLOCKS_PER_SEC;
+		 free(deg_copy);
+		 delete state_info;
          return(index);
       } 
 	  else hash_index = (hash_index + 1) % HASH_SIZE;
+
+	  delete state_info;
    }
+   free(deg_copy);
 
    // The state was not found, so insert it into states.
 
