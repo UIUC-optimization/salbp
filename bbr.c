@@ -157,12 +157,51 @@ void testprob()
 
    sum = 0;
       read_problem(prob_file);
-      //prn_problem();
+      cycle = 1000;
 
-      /* TODO Logic to determine when to call reverse
-	  if ((graph == 2) || (graph == 3) || (graph == 8) || (graph == 11) || (graph == 13) || (graph == 16) || (graph == 19) || (graph == 21) || (graph == 23) || (graph == 25) || (graph == 26) || (graph == 27) || (graph == 28) || (graph == 30)) {
-         reverse_pred();
-      }*/
+         close_pred();
+
+      std::vector<int> E(n_tasks + 1);
+      std::vector<int> L(n_tasks + 1);
+
+      // Determine whether to run in forward or reverse
+      for (int j = 1; j <= n_tasks; ++j)
+      {
+          double ftime = t[j];
+          double rtime = t[j];
+          for (int i = 1; i <= n_tasks; ++i)
+          {
+              if (closed_predecessor_matrix[i][j]) ftime += t[i];       // If task i precedes task j
+              if (closed_predecessor_matrix[j][i]) rtime += t[i];       // If task j precedes task i
+          }
+
+          E[j] = ceil(ftime/cycle);
+          L[j] = ceil(rtime/cycle);
+      }
+
+      int f = 1;
+      int r = 1;
+      for (int m = 1; m <= 5; ++m)
+      {
+          int fcount = 0;
+          int rcount = 0;
+          for (int j = 1; j <= n_tasks; ++j)
+          {
+              if (E[j] <= m) ++fcount;
+              if (L[j] <= m) ++rcount;
+          }
+
+          f *= fcount;
+          r *= rcount;
+      }
+
+      if (r < f)
+      {
+          printf("running in reverse %d %d\n", f, r);
+          reverse_pred();
+      }
+	  else printf("running forward %d %d\n", f, r);
+
       find_successors();
       //prn_successors();
       close_pred();
