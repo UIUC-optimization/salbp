@@ -25,8 +25,8 @@ namespace salb
 
 #define  MAX_N_TASKS 500
 #define  BIG_INT 2147483647
-#define  STATE_SPACE  60000000 /* allocate space for this many states  */
-#define  HASH_SIZE 600000001 // Must be a prime number.  Currently using linear
+#define  STATE_SPACE  120000000 /* allocate space for this many states  */
+#define  HASH_SIZE 1200000041 // Must be a prime number.  Currently using linear
                             // probing, but if quadratic probing is used, then
                             // it must be a prime of the form 4j+3.  20000003=4*5000000+3   40000003=4*10000000+3
 //#define  HEAP_SIZE 30000000   // Maximum number of elements in a heap.
