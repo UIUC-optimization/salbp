@@ -28,7 +28,7 @@ void initialize_states()
    first_state = 0;
    last_state = -1;
 
-   for(i = 0; i <= STATE_SPACE; i++) states[i].n_stations = -1;
+   //for(i = 0; i <= STATE_SPACE; i++) states[i].n_stations = -1;
 }
 
 //_________________________________________________________________________________________________
@@ -77,7 +77,6 @@ void store_state(char *degrees, char n_stations, char LB, int previous, const st
 
    search_info.n_states++;
    
-   states[last_state].n_stations = n_stations;
    states[last_state].LB = LB;
    states[last_state].previous = previous;
    states[last_state].open = 1;
@@ -122,6 +121,7 @@ backtrackinfo* get_state_info(int index)
 	memcpy(ret->degrees, root_degrees, n_tasks + 1);
 	ret->hash_value = 0;
 	ret->idle = 0;
+	ret->n_stations = 0;
 
 	long hash_value = 0;
 
@@ -140,6 +140,7 @@ backtrackinfo* get_state_info(int index)
 					--ret->degrees[successors[task][j]];
 		}
 		ret->idle += (cycle - usedTime);
+		++ret->n_stations;
 		index = states[index].previous;
 	}
 
@@ -264,9 +265,8 @@ int find_or_insert(double key, char *degrees, char n_stations, char LB, int idle
 	  backtrackinfo* state_info = get_state_info(index);
       if (memcmp(state_info->degrees+1, deg_copy+1, n_tasks) == 0) 
 	  {
-         if (n_stations < states[index].n_stations) 
+         if (n_stations < state_info->n_stations) 
 		 {
-            states[index].n_stations = n_stations;
 			states[index].previous = previous;
 			states[index].n_assigned_tasks = tmp_assigned_tasks.size();
 			free (states[index].assigned_tasks);
@@ -287,7 +287,7 @@ int find_or_insert(double key, char *degrees, char n_stations, char LB, int idle
                }
             }
          } 
-		 else if(n_stations == states[index].n_stations) *status = 2;
+		 else if(n_stations == state_info->n_stations) *status = 2;
          else *status = 1;
 
          search_info.find_insert_cpu += (double) (clock() - start_time) / CLOCKS_PER_SEC;

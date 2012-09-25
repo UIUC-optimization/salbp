@@ -97,9 +97,9 @@ void bfs_bbr(int upper_bound)
          break;
       }
 
-      if (states[index].n_stations > level) 
+      if (state_info->n_stations > level) 
 	  {
-         level = states[index].n_stations;
+         level = state_info->n_stations;
          printf("%2d %10d %10d\n", level, count, last_state - first_state + 2);
          count = 0;
          //prn_states(level);
@@ -111,7 +111,7 @@ void bfs_bbr(int upper_bound)
          states[index].open = 0;
          count++;
          search_info.n_explored++;
-         station = states[index].n_stations + 1;
+         station = state_info->n_stations + 1;
          idle = state_info->idle;
          hash_value = state_info->hash_value;
          previous = states[index].previous;
