@@ -123,27 +123,27 @@ backtrackinfo* get_state_info(int index)
 	ret->hash_value = 0;
 	ret->idle = 0;
 
+	long hash_value = 0;
+
 	while (states[index].previous >= 0)
 	{
-		unsigned int hash_value = 0;
 		int usedTime = 0;
 		for (int i = 0; i < states[index].n_assigned_tasks; ++i)
 		{
 			int task = states[index].assigned_tasks[i];
 			ret->degrees[task] = -1;
 			usedTime += t[task];
-			hash_value += hash_values[task] % HASH_SIZE;
+			hash_value += hash_values[task];
 
 			for (int j = 1; j <= successors[task][0]; ++j)
 				if (ret->degrees[successors[task][j]] != -1)
 					--ret->degrees[successors[task][j]];
 		}
-		ret->hash_value += hash_value % HASH_SIZE;
 		ret->idle += (cycle - usedTime);
 		index = states[index].previous;
 	}
 
-	ret->hash_value %= HASH_SIZE;
+	ret->hash_value = hash_value % HASH_SIZE;
 	return ret;
 }
 
@@ -231,7 +231,7 @@ int find_or_insert(double key, char *degrees, char n_stations, char LB, int idle
 
 */
 {
-   unsigned long hash_index, index;
+   int hash_index, index;
    clock_t  start_time;
 
    start_time = clock();
