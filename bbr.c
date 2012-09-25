@@ -159,12 +159,12 @@ void testprob()
       read_problem(prob_file);
 
       cycle = 1000;
-         int bound = n_tasks;
 
          close_pred();
 
       std::vector<int> E(n_tasks + 1);
       std::vector<int> L(n_tasks + 1);
+
       // Determine whether to run in forward or reverse
       for (int j = 1; j <= n_tasks; ++j)
       {
@@ -177,7 +177,7 @@ void testprob()
           }
 
           E[j] = ceil(ftime/cycle);
-          L[j] = bound - rtime + 1;
+          L[j] = ceil(rtime/cycle);
       }
 
       int f = 1;
@@ -189,7 +189,7 @@ void testprob()
           for (int j = 1; j <= n_tasks; ++j)
           {
               if (E[j] <= m) ++fcount;
-              if (L[j] >= bound - m + 1) ++rcount;
+              if (L[j] <= m) ++rcount;
           }
 
           f *= fcount;
@@ -198,15 +198,11 @@ void testprob()
 
       if (r < f)
       {
-          printf("running in reverse\n");
+          printf("running in reverse %d %d\n", f, r);
           reverse_pred();
       }
+	  else printf("running forward %d %d\n", f, r);
 
-
-      /* TODO Logic to determine when to call reverse
-	  if ((graph == 2) || (graph == 3) || (graph == 8) || (graph == 11) || (graph == 13) || (graph == 16) || (graph == 19) || (graph == 21) || (graph == 23) || (graph == 25) || (graph == 26) || (graph == 27) || (graph == 28) || (graph == 30)) {
-         reverse_pred();
-      }*/
       find_successors();
       //prn_successors();
       close_pred();
