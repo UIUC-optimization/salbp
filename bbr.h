@@ -50,13 +50,14 @@ typedef struct searchinfo {
    double  bin_cpu;           // cpu used by bin packing functions
 } searchinfo, *search_infopnt;
 
-typedef struct state {
+struct state {
    char* assigned_tasks;
    char  n_assigned_tasks;
    char  LB;            // The best lower bound computed for this state.
    int   previous;      // Previous state.  Used in backtracking to constuct optimal solution
    char  open;          // = 1 if this state has not been explored yet.
-} state, *statepnt;
+} __attribute__((packed));
+typedef struct state state, *statepnt;
 
 typedef struct backtrackinfo
 {
