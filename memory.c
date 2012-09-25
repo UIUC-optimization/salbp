@@ -198,6 +198,11 @@ void initialize_hash_table()
    }
 }
 
+void free_hash_table()
+{
+	free(hash_table);
+}
+
 //_________________________________________________________________________________________________
 
 int find_or_insert(double key, char *degrees, char n_stations, char LB, int idle, long hash_value, int previous, int method, int *status)
@@ -397,6 +402,7 @@ void free_heaps()
       case 2:  free(bfs_heap); break;
       default: fprintf(stderr,"Unknown search_strategy in free_heaps\n"); exit(1); break;
    }
+   free(heap_sizes);
 }
 
 //_________________________________________________________________________________________________

@@ -184,6 +184,7 @@ void best_first_bbr(int upper_bound)
    }
 
    search_info.best_first_cpu += (double) (clock() - start_time) / CLOCKS_PER_SEC;
+   free_hash_table();
 }
 
 //_________________________________________________________________________________________________

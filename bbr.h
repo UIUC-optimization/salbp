@@ -202,6 +202,7 @@ int get_state();
 backtrackinfo* get_state_info(int index);
 void prn_states(int n_stations);
 void initialize_hash_table();
+void free_hash_table();
 int find_or_insert(double key, char *degrees, char n_stations, char LB, int idle, long hash_value, int previous, int method, int *status);
 void initialize_heaps();
 void reinitialize_heaps();
