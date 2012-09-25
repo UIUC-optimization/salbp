@@ -63,6 +63,8 @@ void best_first_bbr(int upper_bound)
    initialize_states();
    initialize_heaps();
 
+   global_start_time = clock();
+
    // Add the root problem to the hash table and the list of states.
 
    t_sum = 0;
