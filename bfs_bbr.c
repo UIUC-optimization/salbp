@@ -128,6 +128,7 @@ void bfs_bbr(int upper_bound)
    }
 
    search_info.bfs_bbr_cpu += (double) (clock() - start_time) / CLOCKS_PER_SEC;
+   free_hash_table();
 }
 
 //_________________________________________________________________________________________________

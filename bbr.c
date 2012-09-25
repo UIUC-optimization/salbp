@@ -200,13 +200,15 @@ void testprob()
       {
           printf("running in reverse %d %d\n", f, r);
           reverse_pred();
+		  for (int j = 1; j <= n_tasks; ++j)
+			  free(closed_predecessor_matrix[j]);
+		  free(closed_predecessor_matrix);
+		  close_pred();
       }
 	  else printf("running forward %d %d\n", f, r);
 
       find_successors();
       //prn_successors();
-      close_pred();
-      //prn_pred(closed_predecessor_matrix);
       compute_potentially_dominates();
       //prn_pred(potentially_dominates);
       compute_positional_weights();
@@ -310,6 +312,7 @@ void testprob()
          free(closed_predecessor_matrix[j]);
          free(potentially_dominates[j]);
          free(successors[j]);
+		 free(predecessors[j]);
       }
 
       free(predecessor_matrix);
@@ -326,6 +329,7 @@ void testprob()
       free(LB3_values);
       free(sorted_task_times);
       free(descending_order);
+	  free(states);
 
    free(root_degrees);
 }

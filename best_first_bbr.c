@@ -60,7 +60,7 @@ void best_first_bbr(int upper_bound)
                               // none of the heaps were filled, and the maximum_n_full_loads was not exceeded.
 
    initialize_hash_table();
-   reinitialize_states();
+   initialize_states();
    initialize_heaps();
 
    // Add the root problem to the hash table and the list of states.
@@ -169,6 +169,7 @@ void best_first_bbr(int upper_bound)
    }
 
    search_info.best_first_cpu += (double) (clock() - start_time) / CLOCKS_PER_SEC;
+   free_hash_table();
 }
 
 //_________________________________________________________________________________________________
