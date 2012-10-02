@@ -46,7 +46,7 @@ void reinitialize_states()
 
 //_________________________________________________________________________________________________
 
-void store_state(char *degrees, char n_stations, char LB, int idle, long hash_value, int previous)
+void store_state(char *degrees, char n_stations, char LB, int idle, int hash_value, int previous)
 /*
    1. This routine stores a new state in the array states.
       a. It stores it in the next available position, which is determined
@@ -174,7 +174,7 @@ void free_hash_table()
 
 //_________________________________________________________________________________________________
 
-int find_or_insert(double key, char *degrees, char n_stations, char LB, int idle, long hash_value, int previous, int method, int *status)
+int find_or_insert(double key, char *degrees, char n_stations, char LB, int idle, int hash_value, int previous, int method, int *status)
 /*
    1. This routine uses the linear probing method to search the hash table
       for a state.
@@ -200,7 +200,7 @@ int find_or_insert(double key, char *degrees, char n_stations, char LB, int idle
 
 */
 {
-   unsigned long hash_index, index;
+   int hash_index, index;
    clock_t  start_time;
 
    start_time = clock();
@@ -408,7 +408,7 @@ int delete_min(heap_record *heap)
 
 //_________________________________________________________________________________________________
 
-void insert(heap_record** heap, int* heap_size, double key, char *degrees, char n_stations, char LB, int idle, long hash_value, int previous, int add_to_states)
+void insert(heap_record** heap, int* heap_size, double key, char *degrees, char n_stations, char LB, int idle, int hash_value, int previous, int add_to_states)
 /*
    1. This function inserts a state into the heap and calls store_state to add it to the list of states.
    2. add_to_states = 1 indicates that store_state should be called.

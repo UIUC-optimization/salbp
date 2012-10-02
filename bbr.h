@@ -193,18 +193,18 @@ int check_stations(char *deg, short *stations, int *start_station, int n_station
 
 void initialize_states();
 void reinitialize_states();
-void store_state(char *degrees, char n_stations, char LB, int idle, long hash_value, int previous);
+void store_state(char *degrees, char n_stations, char LB, int idle, int hash_value, int previous);
 int get_state();
 void prn_states(int n_stations);
 void initialize_hash_table();
 void free_hash_table();
-int find_or_insert(double key, char *degrees, char n_stations, char LB, int idle, long hash_value, int previous, int method, int *status);
+int find_or_insert(double key, char *degrees, char n_stations, char LB, int idle, int hash_value, int previous, int method, int *status);
 void initialize_heaps();
 void reinitialize_heaps();
 void free_heaps();
 int get_min();
 int delete_min(heap_record *heap);
-void insert(heap_record** heap, int* heap_size, double key, char *degrees, char n_stations, char LB, int idle, long hash_value, int previous, int add_to_states);
+void insert(heap_record** heap, int* heap_size, double key, char *degrees, char n_stations, char LB, int idle, int hash_value, int previous, int add_to_states);
 void siftup(heap_record *heap, int k);
 void siftdown(heap_record *heap, int k);
 
