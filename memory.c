@@ -80,6 +80,7 @@ void store_state(char *degrees, char n_stations, char LB, int previous, const st
    states[last_state].LB = LB;
    states[last_state].previous = previous;
    states[last_state].open = 1;
+   states[last_state].n_stations = n_stations;
 
    MALLOC(states[last_state].assigned_tasks, tmp_assigned_tasks.size(), char);
    states[last_state].n_assigned_tasks = tmp_assigned_tasks.size();
@@ -121,7 +122,6 @@ backtrackinfo* get_state_info(int index)
 	memcpy(ret->degrees, root_degrees, n_tasks + 1);
 	ret->hash_value = 0;
 	ret->idle = 0;
-	ret->n_stations = 0;
 
 	long hash_value = 0;
 
@@ -140,7 +140,6 @@ backtrackinfo* get_state_info(int index)
 					--ret->degrees[successors[task][j]];
 		}
 		ret->idle += (cycle - usedTime);
-		++ret->n_stations;
 		index = states[index].previous;
 	}
 
@@ -265,8 +264,9 @@ int find_or_insert(double key, char *degrees, char n_stations, char LB, int idle
 	  backtrackinfo* state_info = get_state_info(index);
       if (memcmp(state_info->degrees+1, deg_copy+1, n_tasks) == 0) 
 	  {
-         if (n_stations < state_info->n_stations) 
+         if (n_stations < states[index].n_stations) 
 		 {
+			states[index].n_stations = n_stations;
 			states[index].previous = previous;
 			states[index].n_assigned_tasks = tmp_assigned_tasks.size();
 			free (states[index].assigned_tasks);
@@ -287,7 +287,7 @@ int find_or_insert(double key, char *degrees, char n_stations, char LB, int idle
                }
             }
          } 
-		 else if(n_stations == state_info->n_stations) *status = 2;
+		 else if(n_stations == states[index].n_stations) *status = 2;
          else *status = 1;
 
          search_info.find_insert_cpu += (double) (clock() - start_time) / CLOCKS_PER_SEC;
@@ -497,7 +497,7 @@ void insert(heap_record** heap, int* heap_size, double key, char *degrees, char 
    n_in_heap++;
    (*heap)[0].index = n_in_heap;
    (*heap)[n_in_heap].key = key;
-   if (add_to_states) store_state(degrees, n_stations, LB, previous, tmp_assigned_tasks);
+   store_state(degrees, n_stations, LB, previous, tmp_assigned_tasks);
    (*heap)[n_in_heap].index = last_state;
    siftup(*heap, n_in_heap);
 }

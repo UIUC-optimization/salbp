@@ -147,16 +147,16 @@ void best_first_bbr(int upper_bound)
          n_unassigned = 0;
          for (i = 1; i <= n_tasks; i++) 
 			 if(state_info->degrees[i] >= 0) n_unassigned++;
-         key = ((double)state_info->idle / state_info->n_stations) - 0.02 * n_unassigned;
+         key = ((double)state_info->idle / states[index].n_stations) - 0.02 * n_unassigned;
          printf("%10d %10d %10d %2d %4d %3d %10.3f\n", count, last_state - count + 1, last_state+1, 
-				 state_info->n_stations, state_info->idle, n_tasks - n_unassigned, key);
+				 states[index].n_stations, state_info->idle, n_tasks - n_unassigned, key);
       }
 
       states[index].open = 0;
       if (states[index].LB < UB) 
 	  {
          search_info.n_explored++;
-         station = state_info->n_stations + 1;
+         station = states[index].n_stations + 1;
          idle = state_info->idle;
          hash_value = state_info->hash_value;
          previous = index;

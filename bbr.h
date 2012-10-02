@@ -53,6 +53,7 @@ typedef struct searchinfo {
 struct state {
    char* assigned_tasks;
    char  n_assigned_tasks;
+   char  n_stations;
    char  LB;            // The best lower bound computed for this state.
    int   previous;      // Previous state.  Used in backtracking to constuct optimal solution
    char  open;          // = 1 if this state has not been explored yet.
@@ -62,7 +63,6 @@ typedef struct state state, *statepnt;
 typedef struct backtrackinfo
 {
 	~backtrackinfo() { free(degrees); }
-	char n_stations;
 	char* degrees;
 	int idle;
 	unsigned int hash_value;
