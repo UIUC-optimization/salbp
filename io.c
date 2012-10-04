@@ -104,7 +104,7 @@ void prn_problem()
 }
 
 
-void prn_tasks(short *tasks, int n)
+void prn_tasks(int *tasks, int n)
 {
    int      i, j;
 
@@ -152,7 +152,7 @@ void prn_vec(int *vector, int n)
    printf("\n");
 }
 
-void prn_short(short *vector, int n)
+void prn_int(int *vector, int n)
 {
    int      i;
 

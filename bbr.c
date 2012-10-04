@@ -22,8 +22,8 @@ int      UB;                     // upper bound on the number of stations needed
 char     **predecessor_matrix;   // predecessor_matrix(i,j) = 1 indicates that i immediately precedes j.
 char     **closed_predecessor_matrix;   // closed_predecessor_matrix(i,j) = 1 indicates that i precedes j.
 char     **potentially_dominates;// potentially_dominates[i][j] = 1 if task i potentially dominates task j.
-short    **predecessors;         // predecessors[j] = vector of immediates predecessors of task j.
-short    **successors;           // successors[j] = vector of immediates successors of task j.
+int **predecessors;         // predecessors[j] = vector of immediates predecessors of task j.
+int **successors;           // successors[j] = vector of immediates successors of task j.
 int      *t;                     // t[i] = processing time of task i
 int      *n_successors;          // n_successors[i] = number of successors of i in closed graph.
 int      *n_predecessors;        // n_predecessors[i] = number of predecessors of i in closed graph.
@@ -51,7 +51,7 @@ double   seed=3.1567;       // -s option: seed for random number generation
 int CPU_LIMIT = 3600;
 int* heap_sizes = NULL;
 clock_t global_start_time;
-char* root_degrees = NULL;
+int* root_degrees = NULL;
 
 }; // end namespace salb
 
@@ -161,8 +161,8 @@ void testprob()
 
          close_pred();
 
-      std::vector<int> E(n_tasks + 1);
-      std::vector<int> L(n_tasks + 1);
+      std::vector<unsigned int> E(n_tasks + 1);
+      std::vector<unsigned int> L(n_tasks + 1);
 
       // Determine whether to run in forward or reverse
       for (int j = 1; j <= n_tasks; ++j)
@@ -179,12 +179,12 @@ void testprob()
           L[j] = ceil(rtime/cycle);
       }
 
-      int f = 1;
-      int r = 1;
+      unsigned int f = 1;
+      unsigned int r = 1;
       for (int m = 1; m <= 5; ++m)
       {
-          int fcount = 0;
-          int rcount = 0;
+          unsigned int fcount = 0;
+          unsigned int rcount = 0;
           for (int j = 1; j <= n_tasks; ++j)
           {
               if (E[j] <= m) ++fcount;
@@ -197,14 +197,14 @@ void testprob()
 
       if (r < f)
       {
-          printf("running in reverse %d %d\n", f, r);
+          printf("running in reverse %ld %ld\n", f, r);
           reverse_pred();
 		  for (int j = 1; j <= n_tasks; ++j)
 			  free(closed_predecessor_matrix[j]);
 		  free(closed_predecessor_matrix);
 		  close_pred();
       }
-	  else printf("running forward %d %d\n", f, r);
+	  else printf("running forward %ld %ld\n", f, r);
 
       find_successors();
       //prn_successors();
@@ -214,7 +214,7 @@ void testprob()
       //prn_vec(n_predecessors, n_tasks); prn_vec(n_successors, n_tasks); prn_vec(positional_weight, n_tasks);
       compute_descending_order();
 
-      MALLOC(root_degrees, n_tasks+1, char);
+      MALLOC(root_degrees, n_tasks+1, int);
       t_sum = 0;
       for(i = 1; i <= n_tasks; i++) {
          t_sum += t[i];
@@ -430,11 +430,11 @@ void find_successors()
    }
 
 
-   MALLOC(predecessors, n_tasks+1, short *);
-   MALLOC(successors, n_tasks+1, short *);
+   MALLOC(predecessors, n_tasks+1, int *);
+   MALLOC(successors, n_tasks+1, int *);
    for(i = 1; i <= n_tasks; i++) {
-      MALLOC(predecessors[i], n_predecessors[i]+1, short);
-      MALLOC(successors[i], n_successors[i]+1, short);
+      MALLOC(predecessors[i], n_predecessors[i]+1, int);
+      MALLOC(successors[i], n_successors[i]+1, int);
       k1 = 0;
       k2 = 0;
       for(j = 1; j <= n_tasks; j++) {
@@ -775,7 +775,7 @@ int LB3b()
 
 /*****************************************************************************/
 
-int sum(int *x, short *indices)
+int sum(int *x, int *indices)
 /*
    1. This function computes x[indices[1]] + x[indices[2]] + ... + x[indices[indices[0]].
    2. x[0] must equal the number of elements in x.
@@ -797,7 +797,7 @@ int sum(int *x, short *indices)
 
 //_________________________________________________________________________________________________
 
-double sum_double(double *x, short *indices)
+double sum_double(double *x, int *indices)
 /*
    1. This function computes x[indices[1]] + x[indices[2]] + ... + x[indices[indices[0]].
    2. x[0] must equal the number of elements in x.

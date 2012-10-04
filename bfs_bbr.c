@@ -4,11 +4,11 @@
 namespace salb
 {
 
-static   char     *degrees;      // work vector used by bfs_bbr and genloads
-static   short    *eligible;     // work vector used by bfs_bbr and genloads
-static   short    *tasks;        // work vector used by bfs_bbr and genloads
+static   int *degrees;      // work vector used by bfs_bbr and genloads
+static   int    *eligible;     // work vector used by bfs_bbr and genloads
+static   int    *tasks;        // work vector used by bfs_bbr and genloads
 static   int      index;         // used by bfs_bbr and genloads
-static   char     station;       // used by bfs_bbr and genloads
+static   int     station;       // used by bfs_bbr and genloads
 static   int      idle;          // used by bfs_bbr and genloads
 static   int      hash_value;    // used by bfs_bbr and genloads
 static   int      previous;      // used by bfs_bbr and genloads
@@ -17,9 +17,9 @@ static   int      previous;      // used by bfs_bbr and genloads
 
 void initialize_bfs_bbr()
 {
-   MALLOC(degrees, n_tasks+1, char);
-   MALLOC(eligible, n_tasks+1, short);
-   MALLOC(tasks, n_tasks+1, short);
+   MALLOC(degrees, n_tasks+1, int);
+   MALLOC(eligible, n_tasks+1, int);
+   MALLOC(tasks, n_tasks+1, int);
    search_info.n_branches = 0;
    search_info.n_generated = 0;
    search_info.n_explored = 0;
@@ -45,7 +45,7 @@ void bfs_bbr(int upper_bound)
    3. Written 3/3/06.
 */
 {
-   char     LB;
+   int     LB;
    int      count, i, j, index, LB1, level, n_eligible, status, t_sum;
    double   cpu;
    clock_t  start_time;
@@ -70,7 +70,7 @@ void bfs_bbr(int upper_bound)
    }
    LB1 = (int) ceil((double) t_sum / (double) cycle);
    if(LB1 < UB) {
-      LB = (char) LB1;
+      LB = LB1;
       index = find_or_insert(0.0, degrees, 0, LB, 0, 0, -1, 0, &status);
    }
    if(bin_pack_flag == -1) bin_pack_flag = bin_pack_lb;
@@ -145,9 +145,9 @@ void gen_loads(int depth, int remaining_time, int start, int n_eligible)
    1. This function recursively generates full loads for a workstation.
 */
 {
-   char     LB;
+   int     LB;
    int      full_load, i, ii, j, jj, LB1, LB2, LB3, LB_bin, n, n_sub_eligible, status, stop, sub_idle, sub_hash_value, sub_remaining_time, t_unassigned;
-   short    *list_of_items;
+   int    *list_of_items;
    double   LB2_unassigned, LB3_unassigned;
 
    assert((1 <= depth) && (depth <= n_tasks));
@@ -235,9 +235,9 @@ void gen_loads(int depth, int remaining_time, int start, int n_eligible)
          return;
       }
 
-      LB = (char) LB1;
-      if(LB2 > LB) LB = (char) LB2;
-      if(LB3 > LB) LB = (char) LB3;
+      LB = LB1;
+      if(LB2 > LB) LB = LB2;
+      if(LB3 > LB) LB = LB3;
 
       // Check if a task in this station is potentially dominated by an available task.
       // Modified 5/19/09 to call find_or_insert if a task is potentially dominated.
@@ -306,7 +306,7 @@ void gen_loads(int depth, int remaining_time, int start, int n_eligible)
       // compute the bin packing lower bound.
 
       if(((status == 0) || (status == 3)) && (bin_pack_flag == 1)) {
-         MALLOC(list_of_items, n_tasks+1,  short);
+         MALLOC(list_of_items, n_tasks+1,  int);
          n = 0;
          for(i = 1; i <= n_tasks; i++) {
             j = descending_order[i];
@@ -319,7 +319,7 @@ void gen_loads(int depth, int remaining_time, int start, int n_eligible)
          if(LB_bin < 0) bin_pack_flag = 0;
          LB_bin += station;
          if(LB_bin > LB) {
-            LB = (char) LB_bin;
+            LB = LB_bin;
             states[index].LB = LB;
             if(LB >= UB) {
                //prn_dfs_bbr_info(list_of_items, 0, 0, 0);
@@ -422,7 +422,7 @@ int check_state(int index)
    4. Written 3/21/06.
 */
 {
-   char     degree;
+   int     degree;
    int      i, /*idle,*/ j, jj, stop, t_assigned;
    std::int64_t   hash_value;
 

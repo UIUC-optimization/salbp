@@ -3,27 +3,27 @@
 namespace salb
 {
 
-static   char     *degrees;      // work vector used by hoffman
-static   short    *best_tasks;   // work vector used by hoffman
-static   short    *eligible;     // work vector used by hoffman
-static   short    *tasks;        // work vector used by hoffman
+static   int     *degrees;      // work vector used by hoffman
+static   int    *best_tasks;   // work vector used by hoffman
+static   int    *eligible;     // work vector used by hoffman
+static   int    *tasks;        // work vector used by hoffman
 static   int      min_idle;      // used by hoffman
 static   float    min_cost;      // used by hoffman
 static   int      n_best_tasks;  // used by hoffman
 static   int      max_n_full_loads;
 static   int      n_full_loads;  // used by hoffman
-static   short    *stations;     // work vector used by hoffman
+static   int    *stations;     // work vector used by hoffman
 static   int      *start_station;// work vector used by hoffman
 
 //_________________________________________________________________________________________________
 
 void initialize_hoffman()
 {
-   MALLOC(degrees, n_tasks+1, char);
-   MALLOC(best_tasks, n_tasks+1, short);
-   MALLOC(eligible, n_tasks+1, short);
-   MALLOC(tasks, n_tasks+1, short);
-   MALLOC(stations, n_tasks+1, short);
+   MALLOC(degrees, n_tasks+1, int);
+   MALLOC(best_tasks, n_tasks+1, int);
+   MALLOC(eligible, n_tasks+1, int);
+   MALLOC(tasks, n_tasks+1, int);
+   MALLOC(stations, n_tasks+1, int);
    MALLOC(start_station, n_tasks+2, int);
 }
 
@@ -41,7 +41,7 @@ void free_hoffman()
 
 //_________________________________________________________________________________________________
 
-int hoffman(char *deg, int max_idle, int starting_station, int max_loads)
+int hoffman(int *deg, int max_idle, int starting_station, int max_loads)
 /*
    1. This routine uses the Hoffman heuristic to construct a solution for the simple assembly line balancing problem.
    3. deg(i) = # of immediate predecessors of task i that have not yet been assigned to a station.
@@ -133,7 +133,7 @@ void gen_load(int depth, int remaining_time, int start, int n_eligible, float co
 {
    int      full_load, i, ii, j, jj, n_sub_eligible, stop, sub_remaining_time;
    float    sub_cost;
-   //short *pnt, *stoppnt;
+   //int *pnt, *stoppnt;
 
    assert((1 <= depth) && (depth <= n_tasks));
 
@@ -196,7 +196,7 @@ void gen_load(int depth, int remaining_time, int start, int n_eligible, float co
 
 //_________________________________________________________________________________________________
 
-int check_stations(char *deg, short *stations, int *start_station, int n_stations)
+int check_stations(int *deg, int *stations, int *start_station, int n_stations)
 /*
    1. This routine checks that stations represents a feasible solution.
    2. deg[i] = degree of i before started assigning tasks to workstations.

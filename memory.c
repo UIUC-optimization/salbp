@@ -46,7 +46,7 @@ void reinitialize_states()
 
 //_________________________________________________________________________________________________
 
-void store_state(char *degrees, char n_stations, char LB, int previous, const std::vector<int>& tmp_assigned_tasks)
+void store_state(int *degrees, int n_stations, int LB, int previous, const std::vector<int>& tmp_assigned_tasks)
 /*
    1. This routine stores a new state in the array states.
       a. It stores it in the next available position, which is determined
@@ -82,7 +82,7 @@ void store_state(char *degrees, char n_stations, char LB, int previous, const st
    states[last_state].open = 1;
    states[last_state].n_stations = n_stations;
 
-   MALLOC(states[last_state].assigned_tasks, tmp_assigned_tasks.size(), char);
+   MALLOC(states[last_state].assigned_tasks, tmp_assigned_tasks.size(), int);
    states[last_state].n_assigned_tasks = tmp_assigned_tasks.size();
    for (int i = 0; i < tmp_assigned_tasks.size(); ++i)
 	   states[last_state].assigned_tasks[i] = tmp_assigned_tasks[i];
@@ -118,8 +118,8 @@ int get_state()
 backtrackinfo* get_state_info(int index)
 {
 	backtrackinfo* ret = new backtrackinfo;
-	MALLOC(ret->degrees, n_tasks + 1, char);
-	memcpy(ret->degrees, root_degrees, n_tasks + 1);
+	MALLOC(ret->degrees, n_tasks + 1, int);
+	memcpy(ret->degrees, root_degrees, (n_tasks + 1) * sizeof(int));
 	ret->hash_value = 0;
 	ret->idle = 0;
 
@@ -205,7 +205,7 @@ void free_hash_table()
 
 //_________________________________________________________________________________________________
 
-int find_or_insert(double key, char *degrees, char n_stations, char LB, int idle, long hash_value, int previous, int method, int *status)
+int find_or_insert(double key, int *degrees, int n_stations, int LB, int idle, long hash_value, int previous, int method, int *status)
 /*
    1. This routine uses the linear probing method to search the hash table
       for a state.
@@ -250,7 +250,7 @@ int find_or_insert(double key, char *degrees, char n_stations, char LB, int idle
    hash_index = hash_value;
    assert((0 <= hash_index) && (hash_index < HASH_SIZE));
    std::vector<int> tmp_assigned_tasks; tmp_assigned_tasks.reserve(n_tasks);
-   char* deg_copy; MALLOC(deg_copy, n_tasks + 1, char); memcpy(deg_copy, degrees, n_tasks + 1);
+   int * deg_copy; MALLOC(deg_copy, n_tasks + 1, int); memcpy(deg_copy, degrees, n_tasks + 1);
    for (int i = 1; i <= n_tasks; ++i)
    {
 	   if (degrees[i] == -2) 
@@ -262,7 +262,7 @@ int find_or_insert(double key, char *degrees, char n_stations, char LB, int idle
    while ((index = hash_table[hash_index].index) != -1) 
    {
 	  backtrackinfo* state_info = get_state_info(index);
-      if (memcmp(state_info->degrees+1, deg_copy+1, n_tasks) == 0) 
+      if (memcmp(state_info->degrees+1, deg_copy+1, n_tasks * sizeof(int)) == 0) 
 	  {
          if (n_stations < states[index].n_stations) 
 		 {
@@ -270,7 +270,7 @@ int find_or_insert(double key, char *degrees, char n_stations, char LB, int idle
 			states[index].previous = previous;
 			states[index].n_assigned_tasks = tmp_assigned_tasks.size();
 			free (states[index].assigned_tasks);
-			MALLOC(states[index].assigned_tasks, tmp_assigned_tasks.size(), char);
+			MALLOC(states[index].assigned_tasks, tmp_assigned_tasks.size(), int);
 			for (int i = 0; i < tmp_assigned_tasks.size(); ++i)
 				states[index].assigned_tasks[i] = tmp_assigned_tasks[i];
 
@@ -467,7 +467,7 @@ int delete_min(heap_record *heap)
 
 //_________________________________________________________________________________________________
 
-void insert(heap_record** heap, int* heap_size, double key, char *degrees, char n_stations, char LB, int previous, int add_to_states, const std::vector<int>& tmp_assigned_tasks)
+void insert(heap_record** heap, int* heap_size, double key, int *degrees, int n_stations, int LB, int previous, int add_to_states, const std::vector<int>& tmp_assigned_tasks)
 /*
    1. This function inserts a state into the heap and calls store_state to add it to the list of states.
    2. add_to_states = 1 indicates that store_state should be called.

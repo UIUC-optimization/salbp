@@ -3,11 +3,11 @@
 namespace salb
 {
 
-static   char     *degrees;      // work vector used by bset_first_bbr and genloads2
-static   short    *eligible;     // work vector used by best_first_bbr and genloads2
-static   short    *tasks;        // work vector used by best_first_bbr and genloads2
+static   int *degrees;      // work vector used by bset_first_bbr and genloads2
+static   int    *eligible;     // work vector used by best_first_bbr and genloads2
+static   int    *tasks;        // work vector used by best_first_bbr and genloads2
 static   int      index;         // used by best_first_bbr and genloads2
-static   char     station;       // used by best_first_bbr and genloads2
+static   int station;       // used by best_first_bbr and genloads2
 static   int      idle;          // used by best_first_bbr and genloads2
 static   int      hash_value;    // used by best_first_bbr and genloads2
 static   int      previous;      // used by best_first_bbr and genloads2
@@ -17,9 +17,9 @@ static   int      n_full_loads;  // used by best_first_bbr and genloads2
 
 void initialize_best_first_bbr()
 {
-   MALLOC(degrees, n_tasks+1, char);
-   MALLOC(eligible, n_tasks+1, short);
-   MALLOC(tasks, n_tasks+1, short);
+   MALLOC(degrees, n_tasks+1, int);
+   MALLOC(eligible, n_tasks+1, int);
+   MALLOC(tasks, n_tasks+1, int);
    search_info.n_branches = 0;
    search_info.n_generated = 0;
    search_info.n_explored = 0;
@@ -49,7 +49,7 @@ void best_first_bbr(int upper_bound)
 {
    int      count, root_LB, i, j, index, n_eligible, n_unassigned, status, t_sum;
    double   cpu, key, LB2, LB3;
-   short    *list_of_items;
+   int    *list_of_items;
    clock_t  start_time;
 
    start_time = clock();
@@ -100,7 +100,7 @@ void best_first_bbr(int upper_bound)
 
    if((bin_pack_flag == 1) && (root_LB < UB)) 
    {
-      MALLOC(list_of_items, n_tasks+1,  short);
+      MALLOC(list_of_items, n_tasks+1,  int);
       for (i = 1; i <= n_tasks; i++) 
 	  {
             j = descending_order[i];
@@ -196,10 +196,10 @@ void gen_loads2(int depth, int remaining_time, int start, int n_eligible)
    1. This function recursively generates full loads for a workstation.
 */
 {
-   char     LB;
+   int     LB;
    int      full_load, i, ii, j, jj, LB1, LB2, LB3, LB_bin, n_sub_eligible, n, n_unassigned, status, stop, sub_idle, sub_remaining_time, t_unassigned;
    unsigned long sub_hash_value;
-   short    *list_of_items;
+   int    *list_of_items;
    double   cpu, key, LB2_unassigned, LB3_unassigned;
 
    assert((1 <= depth) && (depth <= n_tasks));
@@ -286,7 +286,7 @@ void gen_loads2(int depth, int remaining_time, int start, int n_eligible)
          sub_hash_value = hash_value;
          for(i = 1; i <= depth-1; i++) sub_hash_value += hash_values[tasks[i]];
          sub_hash_value = sub_hash_value % HASH_SIZE;
-         LB = (char) UB;
+         LB = UB;
          index = find_or_insert(key, degrees, station, LB, sub_idle, sub_hash_value, previous, 1, &status);
          backtrack(index);
       }
@@ -312,9 +312,9 @@ void gen_loads2(int depth, int remaining_time, int start, int n_eligible)
          return;
       }
 
-      LB = (char) LB1;
-      if(LB2 > LB) LB = (char) LB2;
-      if(LB3 > LB) LB = (char) LB3;
+      LB = LB1;
+      if(LB2 > LB) LB = LB2;
+      if(LB3 > LB) LB = LB3;
 
       // Check if a task in this station is potentially dominated by an available task.
    
@@ -364,7 +364,7 @@ void gen_loads2(int depth, int remaining_time, int start, int n_eligible)
       // compute the bin packing lower bound.
 
       if(((status == 0) || (status == 3)) && (bin_pack_flag == 1)) {
-         MALLOC(list_of_items, n_tasks+1,  short);
+         MALLOC(list_of_items, n_tasks+1,  int);
          n = 0;
          for(i = 1; i <= n_tasks; i++) {
             j = descending_order[i];
@@ -377,7 +377,7 @@ void gen_loads2(int depth, int remaining_time, int start, int n_eligible)
          if(LB_bin < 0) bin_pack_flag = 0;
          LB_bin += station;
          if(LB_bin > LB) {
-            LB = (char) LB_bin;
+            LB = LB_bin;
             states[index].LB = LB;
             if(LB >= UB) {
                //prn_dfs_bbr_info(list_of_items, 0, 0, 0);

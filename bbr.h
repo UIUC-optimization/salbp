@@ -51,10 +51,10 @@ typedef struct searchinfo {
 } searchinfo, *search_infopnt;
 
 struct state {
-   char* assigned_tasks;
-   char  n_assigned_tasks;
-   char  n_stations;
-   char  LB;            // The best lower bound computed for this state.
+   int* assigned_tasks;
+   int  n_assigned_tasks;
+   int  n_stations;
+   int  LB;            // The best lower bound computed for this state.
    int   previous;      // Previous state.  Used in backtracking to constuct optimal solution
    char  open;          // = 1 if this state has not been explored yet.
 } __attribute__((packed));
@@ -63,7 +63,7 @@ typedef struct state state, *statepnt;
 typedef struct backtrackinfo
 {
 	~backtrackinfo() { free(degrees); }
-	char* degrees;
+	int* degrees;
 	int idle;
 	unsigned int hash_value;
 } backtrackinfo;
@@ -84,7 +84,7 @@ typedef struct problem {
 } problem, *problempnt;
 
 typedef struct bin_hash_record {
-   char  *key;                   // Used as a bit vector.  Bit i = 1 iff item i has not yet been assigned to a bin.
+   int *key;                   // Used as a bit vector.  Bit i = 1 iff item i has not yet been assigned to a bin.
    int   z;                      // Optimal number of bins for this state.
    int   best_child;             // index in the bin_hash_table where the best child is stored.  Used
                                  // for backtracking.  -1 indicates all items packed or BFD heuristic is optimal.
@@ -92,7 +92,7 @@ typedef struct bin_hash_record {
 
 typedef struct bin_data {
    int      bin;                 // The number of the bin that is being loaded.
-   short    *eligible;           // Points to the list of items that are eligible to be assigned to this bin.
+   int    *eligible;           // Points to the list of items that are eligible to be assigned to this bin.
    int      lb1_sum;             // Sum of the sizes of the eligible items.
    double   lb2_sum;             // Sum of the lb2 values of the eligible items.
    double   lb3_sum;             // Sum of the lb3 values of the eligible items.
@@ -116,8 +116,8 @@ extern   int      UB;                     // upper bound on the number of statio
 extern   char     **predecessor_matrix;   // predecessor_matrix(i,j) = 1 indicates that i immediately precedes j.
 extern   char     **closed_predecessor_matrix;   // closed_predecessor_matrix(i,j) = 1 indicates that i precedes j.
 extern   char     **potentially_dominates;// potentially_dominates[i][j] = 1 if task i potentially dominates task j.
-extern   short    **predecessors;         // predecessors[j] = vector of immediates predecessors of task j.
-extern   short    **successors;           // successors[j] = vector of immediates successors of task j.
+extern   int **predecessors;         // predecessors[j] = vector of immediates predecessors of task j.
+extern   int **successors;           // successors[j] = vector of immediates successors of task j.
 extern   int      *t;                     // t[i] = processing time of task i
 extern   int      *n_successors;          // n_successors[i] = number of successors of i in closed graph.
 extern   int      *n_predecessors;        // n_predecessors[i] = number of predecessors of i in closed graph.
@@ -143,7 +143,7 @@ extern   double   seed;        // -s option: seed for random number generation
 extern	 int CPU_LIMIT;
 extern   int*     heap_sizes;
 extern   clock_t  global_start_time;
-extern char* root_degrees;
+extern int* root_degrees;
 
 
 // Functions in bbr.c
@@ -160,8 +160,8 @@ void compute_LB3_values();
 void compute_positional_weights();
 void compute_descending_order();
 int LB3b();
-int sum(int *x, short *indices);
-double sum_double(double *x, short *indices);
+int sum(int *x, int *indices);
+double sum_double(double *x, int *indices);
 double ggubfs(double *dseed);
 int randomi(int n, double *dseed);
 
@@ -180,37 +180,37 @@ void prn_load(int depth);
 
 void read_problem(const char *f);
 void prn_problem();
-void prn_tasks(short *tasks, int n);
+void prn_tasks(int *tasks, int n);
 void prn_pred(char **predecessor_matrix);
 void prn_successors();
 void prn_vec(int *vector, int n);
-void prn_short(short *vector, int n);
+void prn_int(int *vector, int n);
 
 // Functions in hoffman.c
 
 void initialize_hoffman();
 void free_hoffman();
-int hoffman(char *deg, int max_idle, int starting_station, int max_loads);
+int hoffman(int *deg, int max_idle, int starting_station, int max_loads);
 void gen_load(int depth, int remaining_time, int start, int n_eligible, float cost);
-int check_stations(char *deg, short *stations, int *start_station, int n_stations);
+int check_stations(int *deg, int *stations, int *start_station, int n_stations);
 
 // Functions in memory.c
 
 void initialize_states();
 void reinitialize_states();
-void store_state(char *degrees, char n_stations, char LB, int previous, const std::vector<int>& tmp_assigned_tasks);
+void store_state(int *degrees, int n_stations, int LB, int previous, const std::vector<int>& tmp_assigned_tasks);
 int get_state();
 backtrackinfo* get_state_info(int index);
 void prn_states(int n_stations);
 void initialize_hash_table();
 void free_hash_table();
-int find_or_insert(double key, char *degrees, char n_stations, char LB, int idle, long hash_value, int previous, int method, int *status);
+int find_or_insert(double key, int *degrees, int n_stations, int LB, int idle, long hash_value, int previous, int method, int *status);
 void initialize_heaps();
 void reinitialize_heaps();
 void free_heaps();
 int get_min();
 int delete_min(heap_record *heap);
-void insert(heap_record** heap, int* heap_size, double key, char *degrees, char n_stations, char LB, int previous, int add_to_states, const std::vector<int>& tmp_assigned_tasks);
+void insert(heap_record** heap, int* heap_size, double key, int *degrees, int n_stations, int LB, int previous, int add_to_states, const std::vector<int>& tmp_assigned_tasks);
 void siftup(heap_record *heap, int k);
 void siftdown(heap_record *heap, int k);
 
@@ -239,30 +239,30 @@ void gen_loads2(int depth, int remaining_time, int start, int n_eligible);
 
 void initialize_bin_packing();
 void free_bin_packing();
-int bin_dfs_bbr(short *list_of_items);
-int dfs_bbr(int depth, short *eligible, int bin_hash_value, int lb1_sum, double lb2_sum, double lb3_sum, int *index);
+int bin_dfs_bbr(int *list_of_items);
+int dfs_bbr(int depth, int *eligible, int bin_hash_value, int lb1_sum, double lb2_sum, double lb3_sum, int *index);
 void bin_backtrack(int index);
 int bin_backtrack2(int index);
-void check_bin_solution(short *items, int *solution, int n_bins);
-int check_child(short *items, int best_child);
-void bin_gen_nondominated_loads(int depth, short *eligible, int fixed_item, int lb1_sum, double lb2_sum, double lb3_sum, int ub);
+void check_bin_solution(int *items, int *solution, int n_bins);
+int check_child(int *items, int best_child);
+void bin_gen_nondominated_loads(int depth, int *eligible, int fixed_item, int lb1_sum, double lb2_sum, double lb3_sum, int ub);
 void feasible(int index, int lower_sum, int upper_sum, bin_datapnt bin_data);
-int test_domination(short *items, bin_datapnt bin_data);
-int best_fit_decreasing(short *available_items, int *solution);
-int bin_preprocess(short *eligible, short *remaining_items);
-int check_bin_preprocess_data(short *eligible);
-void prn_loads(int depth, short *eligible, int ub);
-void prn_bfd_solution(short *eligible, int *solution, int z);
-void prn_dfs_bbr_info(short *eligible, int depth, int lb, int z);
-void prn_preprocess_info(short *eligible, int n_bins_used, short *remaining_items);
-void prn_sizes(short *eligible, int n);
+int test_domination(int *items, bin_datapnt bin_data);
+int best_fit_decreasing(int *available_items, int *solution);
+int bin_preprocess(int *eligible, int *remaining_items);
+int check_bin_preprocess_data(int *eligible);
+void prn_loads(int depth, int *eligible, int ub);
+void prn_bfd_solution(int *eligible, int *solution, int z);
+void prn_dfs_bbr_info(int *eligible, int depth, int lb, int z);
+void prn_preprocess_info(int *eligible, int n_bins_used, int *remaining_items);
+void prn_sizes(int *eligible, int n);
 void initialize_bin_hash_table();
-void compute_key(char *key, short *items);
-int hash_items(short *items);
-int hash_key(char *key);
-int insert_in_bin_hash(short *items, int hash_index, int best_child, int z);
-int find_in_bin_hash(short *items, int hash_index);
-int compare_sizes(char *key1, short *items);
+void compute_key(int *key, int *items);
+int hash_items(int *items);
+int hash_key(int *key);
+int insert_in_bin_hash(int *items, int hash_index, int best_child, int z);
+int find_in_bin_hash(int *items, int hash_index);
+int compare_sizes(int *key1, int *items);
 void prn_bin_hash_table();
 void prn_bin_hash_table_entry(int index);
 int get_n_in_bin_hash_table();

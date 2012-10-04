@@ -12,7 +12,7 @@ namespace salb
          a list of all the states encountered in the branch and bound tree.
       b. These functions do not use Korf's special method of generating pairs of nondominated items.
          This could be beneficial in speeding up the program.
-   3. If short on memory, then it is not necessary to store states where the Best Fit Decreasing (BFD)
+   3. If int on memory, then it is not necessary to store states where the Best Fit Decreasing (BFD)
       heuristic equals the local lower bound.
    4. The depth first search (DFS) function is designed to find the optimal solution for every subproblem
       on which it is called.  It does not use global lower and upper bounds for pruning.  It only uses 
@@ -54,7 +54,7 @@ static   int      bin_status;             // used to stop the search process if 
 static   int      capacity;               // size of the bins, which equals the cycle time.
 static   int      max_size;               // maximum item size.
 static   int      n_items;                // number of items, which equals the number of tasks.
-static   short    ***loads;               // loads[d][.][.] contains the loads at level d.
+static   int    ***loads;               // loads[d][.][.] contains the loads at level d.
 static   int      *n_loads;               // n_loads[d] = number of loads at level d.
 static   int      *sizes;                 // sizes[j] = size of item j, which equals t[j].
 static   int      *sizes_in_key;          // sizes_in_key[s] = number of items of size s in the key (used by compare_bin_keys).
@@ -63,11 +63,11 @@ static   clock_t  start_time;
 // The following variables are used in bin_gen_nondominated_loads and the functions it calls (such as feasible and test_domination).
 
 //static   int      bin;                    // bin = the number of the bin that is being loaded.
-static   short    *included;              // list of items currently in the bin.
+static   int    *included;              // list of items currently in the bin.
 static   int      *excluded_sizes;        // excluded_sizes(s) = number of items of size s that are currently excluded from the bin.
 static   int      n_included;             // number of items currently in the bin.
 static   int      n_remaining_items;      // number of items still available to put in the bin.
-static   short    *remaining_items;       // list of items still available to be put in the bin.
+static   int    *remaining_items;       // list of items still available to be put in the bin.
 static   int      *sum_remaining_items;   // sum_remaining_items[j] = sum(k = j, j+1, ..., n_remaining_items} sizes[remaining_items[k]].
 
 static   int      n_in_bin_hash_table;
@@ -87,7 +87,7 @@ void initialize_bin_packing()
    n_items = n_tasks;
    sizes = t;
 
-   MALLOC(loads, n_items+1, short **);
+   MALLOC(loads, n_items+1, int **);
    sum = 0;
    for(i = n_items; i >= 1; i--) {
       sum += sorted_task_times[i];
@@ -95,15 +95,15 @@ void initialize_bin_packing()
    }
    max_n_items_in_load = n_items - i;
    for(i = 0; i <= n_items; i++) {
-      MALLOC(loads[i], MAX_N_LOADS+1, short *);
+      MALLOC(loads[i], MAX_N_LOADS+1, int *);
       loads[i][0] = NULL;
       for(j = 1; j <= MAX_N_LOADS; j++) {
-         MALLOC(loads[i][j], max_n_items_in_load+1, short);
+         MALLOC(loads[i][j], max_n_items_in_load+1, int);
       }
    }
    MALLOC(n_loads, n_items+1, int);
 
-   MALLOC(included, n_items+1, short);
+   MALLOC(included, n_items+1, int);
    for(i = 1; i <= n_items; i++) included[i] = 0;
    max_size = 0;
    for(i = 1; i <= n_items; i++) {
@@ -116,7 +116,7 @@ void initialize_bin_packing()
       excluded_sizes[i] = 0;
       sizes_in_key[i] = 0;
    }
-   MALLOC(remaining_items, n_items+1, short);
+   MALLOC(remaining_items, n_items+1, int);
    MALLOC(sum_remaining_items, n_items+1, int);
 
    MALLOC(bin_hash_values, max_size+1, int);
@@ -164,7 +164,7 @@ void free_bin_packing()
 
 /*************************************************************************************************/
 
-int bin_dfs_bbr(short *list_of_items)
+int bin_dfs_bbr(int *list_of_items)
 /*
    1. This function uses depth first search (DFS) branch, bound, and remember (BBR) to find an optimal solution
       for the bin packing problem.
@@ -173,13 +173,13 @@ int bin_dfs_bbr(short *list_of_items)
 */
 {
    int      bin_hash_value, index, n_preprocessed_bins, z, z_backtrack;
-   short    *remaining_items;
+   int    *remaining_items;
 
    start_time = clock();
 
    // Perform preprocessing.
 
-   MALLOC(remaining_items, n_items+1, short);
+   MALLOC(remaining_items, n_items+1, int);
    remaining_items[0] = 0;
    n_preprocessed_bins = bin_preprocess(list_of_items, remaining_items);
    
@@ -208,7 +208,7 @@ int bin_dfs_bbr(short *list_of_items)
 
 //_________________________________________________________________________________________________
 
-int dfs_bbr(int depth, short *eligible, int bin_hash_value, int lb1_sum, double lb2_sum, double lb3_sum, int *index)
+int dfs_bbr(int depth, int *eligible, int bin_hash_value, int lb1_sum, double lb2_sum, double lb3_sum, int *index)
 /*
    1. This function performs depth first search (DFS) branch, bound, and remember to find an optimal solution for the bin packing problem.
    2. This function is designed to find the optimal solution for every subproblem on which it is called.
@@ -243,7 +243,7 @@ int dfs_bbr(int depth, short *eligible, int bin_hash_value, int lb1_sum, double 
 {
    int      best_child, i, j, k, lb, lb1, lb2, lb3, n_eligible, n_items_in_load, *solution, z;
    int      n_sub_items, sub_hash_value, sub_index, sub_lb1_sum, sum_hash_values, z_sub;
-   short    *items, *sub_eligible;
+   int    *items, *sub_eligible;
    double   sub_lb2_sum, sub_lb3_sum;
 
    if((double) (clock() - start_time) / CLOCKS_PER_SEC > 1.0) bin_status = 2;
@@ -292,7 +292,7 @@ int dfs_bbr(int depth, short *eligible, int bin_hash_value, int lb1_sum, double 
    lb = MAX(lb1, lb2);
    lb = MAX(lb, lb3);
 
-   //printf("%2d %2d %2d: ", depth, lb, z); prn_short(eligible, n_eligible); printf("          "); for (i = 1; i <= n_eligible; i++) {printf("%2d ", sizes[eligible[i]]);} printf("\n");
+   //printf("%2d %2d %2d: ", depth, lb, z); prn_int(eligible, n_eligible); printf("          "); for (i = 1; i <= n_eligible; i++) {printf("%2d ", sizes[eligible[i]]);} printf("\n");
 
    // Compare the lb to the number of bins used by the BFD solution.
 
@@ -313,8 +313,8 @@ int dfs_bbr(int depth, short *eligible, int bin_hash_value, int lb1_sum, double 
    // Generate a subproblem for each load.
 
    best_child = -1;
-   MALLOC(items, n_items+1, short);
-   MALLOC(sub_eligible, n_items+1, short);
+   MALLOC(items, n_items+1, int);
+   MALLOC(sub_eligible, n_items+1, int);
    for(i = 1; i <= n_loads[depth]; i++) {
 
       // Create the subproblem
@@ -356,8 +356,8 @@ int dfs_bbr(int depth, short *eligible, int bin_hash_value, int lb1_sum, double 
          z = 1 + z_sub;
          best_child = sub_index;
          if(check_child(eligible, best_child) == 1) {
-            prn_short(eligible, eligible[0]);
-            prn_short(sub_eligible, sub_eligible[0]);
+            prn_int(eligible, eligible[0]);
+            prn_int(sub_eligible, sub_eligible[0]);
             prn_sizes(sub_eligible, sub_eligible[0]);
             prn_bin_hash_table_entry(best_child);
          }
@@ -399,7 +399,7 @@ void bin_backtrack(int index)
 */
 {
    int      *bfd_solution, best_child, flag, i, j, n, n_assigned, n_bfd_bins, n_bins, n_in_child, n_in_parent, n_remaining, parent_index, *solution;
-   short    item, *items, *items_in_child_not_parent, *items_in_parent_not_child, *remaining_items;
+   int    item, *items, *items_in_child_not_parent, *items_in_parent_not_child, *remaining_items;
 
    assert((0 <= index) && (index < BIN_HASH_SIZE));
 
@@ -408,7 +408,7 @@ void bin_backtrack(int index)
 
    // Create the list of items in the problem.
 
-   MALLOC(items, n_items+1, short);
+   MALLOC(items, n_items+1, int);
    n = 0;
    for(i = 1; i <= n_items; i++) {
       if (IN_SET(bin_hash_table[index].key,i)) {
@@ -439,8 +439,8 @@ void bin_backtrack(int index)
 
    // Backtrack.  Corrected 7/13/09 to handle a child that contains items that are not in the parent.
 
-   MALLOC(items_in_child_not_parent, n_items+1, short);
-   MALLOC(items_in_parent_not_child, n_items+1, short);
+   MALLOC(items_in_child_not_parent, n_items+1, int);
+   MALLOC(items_in_parent_not_child, n_items+1, int);
    n_bins = 0;
    n_assigned = 0;
    parent_index = index;
@@ -496,7 +496,7 @@ void bin_backtrack(int index)
 
    // Use the BFD heuristic to assign the remaining items to bins.
 
-   MALLOC(remaining_items, n_items+1, short);
+   MALLOC(remaining_items, n_items+1, int);
    n_remaining = 0;
    for(i = 1; i <= n_items; i++) {
       if (IN_SET(bin_hash_table[index].key,i)) {
@@ -535,7 +535,7 @@ int bin_backtrack2(int index)
 {
    int      *bfd_solution, best_child, flag, i, *in_items, j, n, n_assigned, n_bfd_bins, n_bins, n_remaining;
    int      /*parent_index,*/ s, *sizes_in_child, *sizes_in_parent, *solution;
-   short    *items, *remaining_items;
+   int    *items, *remaining_items;
 
    assert((0 <= index) && (index < BIN_HASH_SIZE));
 
@@ -544,7 +544,7 @@ int bin_backtrack2(int index)
 
    // Create the list of items in the problem.
 
-   MALLOC(items, n_items+1, short);
+   MALLOC(items, n_items+1, int);
    n = 0;
    for(i = 1; i <= n_items; i++) {
       if (IN_SET(bin_hash_table[index].key,i)) {
@@ -630,7 +630,7 @@ int bin_backtrack2(int index)
 
    // Use the BFD heuristic to assign the remaining items to bins.
 
-   MALLOC(remaining_items, n_items+1, short);
+   MALLOC(remaining_items, n_items+1, int);
    n_remaining = 0;
    for(i = 1; i <= n_items; i++) {
       j = descending_order[i];
@@ -661,7 +661,7 @@ int bin_backtrack2(int index)
 
 //_________________________________________________________________________________________________
 
-void check_bin_solution(short *items, int *solution, int n_bins)
+void check_bin_solution(int *items, int *solution, int n_bins)
 /*
    1. This routine checks that solution represents a feasible assignment of items to bins.
    2. Input Variables
@@ -706,7 +706,7 @@ void check_bin_solution(short *items, int *solution, int n_bins)
    for(i = 1; i <= max_size; i++) {
       if(sizes_in_items[i] != sizes_in_solution[i]) {
          fprintf(stderr,"The set of sizes of the items in items is not the same as the set of the sizes of solution\n"); 
-         prn_short(items, items[0]);
+         prn_int(items, items[0]);
          prn_sizes(items, items[0]);
          for (j = 1; j <= n_items; j++) {
             if(solution[j] > 0) printf("%2d ", j); 
@@ -751,7 +751,7 @@ void check_bin_solution(short *items, int *solution, int n_bins)
 
 //_________________________________________________________________________________________________
 
-int check_child(short *items, int best_child)
+int check_child(int *items, int best_child)
 /*
    1. This routine checks if the set of the sizes of the items in best_child is a subset of the set of
       sizes of the items in items.
@@ -818,7 +818,7 @@ int check_child(short *items, int best_child)
 
 /*************************************************************************************************/
 
-void bin_gen_nondominated_loads(int depth, short *eligible, int fixed_item, int lb1_sum, double lb2_sum, double lb3_sum, int ub)
+void bin_gen_nondominated_loads(int depth, int *eligible, int fixed_item, int lb1_sum, double lb2_sum, double lb3_sum, int ub)
 /*
    1. This function sets up the data to call feasible, which generates full loads for a bin in a 
       bin packing problem.
@@ -942,12 +942,12 @@ void feasible(int index, int lower_sum, int upper_sum, bin_datapnt bin_data)
    if(bin_status > 0) return;
 
    //printf("%2d %2d %2d\n", index, lower_sum, upper_sum);
-   //prn_short(included, n_included);
+   //prn_int(included, n_included);
 
    if((index > n_remaining_items) || (upper_sum < sizes[remaining_items[n_remaining_items]])) {
       
       included[0] = n_included;
-      //printf("%2d %2d %2d: ", sum(sizes,included), lower_sum, upper_sum); prn_short(included, n_included); printf("          ");   for (i = 1; i <= n_included; i++) {printf("%2d ", sizes[included[i]]);} printf("\n");
+      //printf("%2d %2d %2d: ", sum(sizes,included), lower_sum, upper_sum); prn_int(included, n_included); printf("          ");   for (i = 1; i <= n_included; i++) {printf("%2d ", sizes[included[i]]);} printf("\n");
 
       // Compute lower bounds (LB1, LB2, LB3 from Scholl and Becker (2006)) for this load.
 
@@ -980,7 +980,7 @@ void feasible(int index, int lower_sum, int upper_sum, bin_datapnt bin_data)
          return;
       }
       
-      //printf("%2d %2d %2d: ", sum(sizes, included), lower_sum, upper_sum); prn_short(included, n_included);  printf("          ");  for (i = 1; i <= n_included; i++) {printf("%2d ", sizes[included[i]]);} printf("\n");
+      //printf("%2d %2d %2d: ", sum(sizes, included), lower_sum, upper_sum); prn_int(included, n_included);  printf("          ");  for (i = 1; i <= n_included; i++) {printf("%2d ", sizes[included[i]]);} printf("\n");
       
       bin = bin_data->bin;
       n_loads[bin]++;
@@ -1053,7 +1053,7 @@ void feasible(int index, int lower_sum, int upper_sum, bin_datapnt bin_data)
 
 //_________________________________________________________________________________________________
 
-int test_domination(short *items, bin_datapnt bin_data)
+int test_domination(int *items, bin_datapnt bin_data)
 /*
    1. This function tests if a load is dominated.
    2. Based on Korf's algorithm in An Improved Algorithm for Optimal Bin Packing.
@@ -1156,7 +1156,7 @@ int test_domination(short *items, bin_datapnt bin_data)
 
 /*************************************************************************************************/
 
-int best_fit_decreasing(short *available_items, int *solution)
+int best_fit_decreasing(int *available_items, int *solution)
 /*
    1. This function uses the best fit decreasing (BFD) heuristic to assign the items to the bins
       for the bin packing problem.
@@ -1278,7 +1278,7 @@ int best_fit_decreasing(short *available_items, int *solution)
 
 /*************************************************************************************************/
 
-int bin_preprocess(short *eligible, short *remaining_items)
+int bin_preprocess(int *eligible, int *remaining_items)
 /*
   1. This function performs some simple preprocessing for the bin packing problem.
   2. Input Variables
@@ -1292,11 +1292,11 @@ int bin_preprocess(short *eligible, short *remaining_items)
 */
 {
    int      i, j, n_bins_used, n_eligible, n_small, n_remaining;
-   short    *small_items;
+   int    *small_items;
 
    assert(check_bin_preprocess_data(eligible) == 1);
    n_eligible = eligible[0];
-   MALLOC(small_items, n_eligible+1, short);
+   MALLOC(small_items, n_eligible+1, int);
 
    n_bins_used = 0;
    n_remaining = 0;
@@ -1335,7 +1335,7 @@ int bin_preprocess(short *eligible, short *remaining_items)
 }
 //_________________________________________________________________________________________________
 
-int check_bin_preprocess_data(short *eligible)
+int check_bin_preprocess_data(int *eligible)
 /*
   1. This function performs some simple tests on the data input into the bin_preprocess function.
   2. Input Variables
@@ -1373,7 +1373,7 @@ int check_bin_preprocess_data(short *eligible)
 
 /*************************************************************************************************/
 
-void prn_loads(int depth, short *eligible, int ub)
+void prn_loads(int depth, int *eligible, int ub)
 {
    int      i, j, n_eligible;
 
@@ -1396,7 +1396,7 @@ void prn_loads(int depth, short *eligible, int ub)
 
 //_________________________________________________________________________________________________
 
-void prn_bfd_solution(short *eligible, int *solution, int z)
+void prn_bfd_solution(int *eligible, int *solution, int z)
 {
    int      i, n_eligible;
 
@@ -1414,7 +1414,7 @@ void prn_bfd_solution(short *eligible, int *solution, int z)
 
 //_________________________________________________________________________________________________
 
-void prn_dfs_bbr_info(short *eligible, int depth, int lb, int z)
+void prn_dfs_bbr_info(int *eligible, int depth, int lb, int z)
 {
    int      i, /*index,*/ n_eligible;
 
@@ -1422,7 +1422,7 @@ void prn_dfs_bbr_info(short *eligible, int depth, int lb, int z)
    //index = hash_items(eligible);
    printf("%2d %2d %2d %2d ", depth, lb, z, n_eligible); 
    //printf("%2d %2d %2d %2d %8d ", depth, lb, z, n_eligible, index); 
-   //prn_short(eligible, n_eligible); 
+   //prn_int(eligible, n_eligible); 
    //printf("          "); 
    for(i = 1; i <= n_eligible; i++) {
       printf("%2d ", sizes[eligible[i]]);
@@ -1432,7 +1432,7 @@ void prn_dfs_bbr_info(short *eligible, int depth, int lb, int z)
 
 //_________________________________________________________________________________________________
 
-void prn_preprocess_info(short *eligible, int n_bins_used, short *remaining_items)
+void prn_preprocess_info(int *eligible, int n_bins_used, int *remaining_items)
 {
    int      i, n_eligible, n_remaining;
 
@@ -1450,7 +1450,7 @@ void prn_preprocess_info(short *eligible, int n_bins_used, short *remaining_item
 
 //_________________________________________________________________________________________________
 
-void prn_sizes(short *eligible, int n)
+void prn_sizes(int *eligible, int n)
 {
    int      i;
 
@@ -1490,7 +1490,7 @@ void initialize_bin_hash_table()
 
 //_________________________________________________________________________________________________
 
-void compute_key(char *key, short *items)
+void compute_key(int *key, int *items)
 /*
    1. This routine computes the key corresponding to a set of items.
    2. The jth bit of key is set to one if item j is in items, o.w. it is set to zero.
@@ -1514,7 +1514,7 @@ void compute_key(char *key, short *items)
 
 //_________________________________________________________________________________________________
 
-int hash_items(short *items)
+int hash_items(int *items)
 /* 
    1. This routine computes the hash value of a set of items.
    2. It uses a simple modular hash function.
@@ -1539,7 +1539,7 @@ int hash_items(short *items)
 
 //_________________________________________________________________________________________________
 
-int hash_key(char *key)
+int hash_key(int *key)
 /* 
    1. This routine computes the hash value of a key.
    2. It uses a simple modular hash function.
@@ -1560,7 +1560,7 @@ int hash_key(char *key)
 
 //_________________________________________________________________________________________________
 
-int insert_in_bin_hash(short *items, int hash_index, int best_child, int z)
+int insert_in_bin_hash(int *items, int hash_index, int best_child, int z)
 /*
    1. This routine uses the linear probing method to insert a
       a set of items into the bin hash table.
@@ -1596,7 +1596,7 @@ int insert_in_bin_hash(short *items, int hash_index, int best_child, int z)
    }
 
    n_bytes = (n_items / 8) + ((n_items % 8) == 0 ? 0 : 1);
-   MALLOC(bin_hash_table[index].key, n_bytes, char);
+   MALLOC(bin_hash_table[index].key, n_bytes, int);
    compute_key(bin_hash_table[index].key, items);
    bin_hash_table[index].best_child = best_child;
    bin_hash_table[index].z = z;
@@ -1607,7 +1607,7 @@ int insert_in_bin_hash(short *items, int hash_index, int best_child, int z)
 
 //_________________________________________________________________________________________________
 
-int find_in_bin_hash(short *items, int hash_index)
+int find_in_bin_hash(int *items, int hash_index)
 /*
    1. This routine searches the bin hash table for a key that represents the same set of item sizes
       as those for items.
@@ -1640,7 +1640,7 @@ int find_in_bin_hash(short *items, int hash_index)
 
 //_________________________________________________________________________________________________
 
-int compare_sizes(char *key, short *items)
+int compare_sizes(int *key, int *items)
 /*
    1. This routine compares the set of items represented by key to determine if it represents
       the same set of sizes as the items in items.
@@ -1649,7 +1649,7 @@ int compare_sizes(char *key, short *items)
 */
 {
    int      i, n, n_key, status;
-   short    *items_in_key;
+   int    *items_in_key;
 
    status = 1;
 
@@ -1657,7 +1657,7 @@ int compare_sizes(char *key, short *items)
    // sizes_in_key[s] = number of items of size s in key.
 
    n_key = 0;
-   MALLOC(items_in_key, n_items+1, short);
+   MALLOC(items_in_key, n_items+1, int);
    for(i = 1; i <= n_items; i++) {
       if (IN_SET(key,i)) {
          sizes_in_key[sizes[i]]++;
