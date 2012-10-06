@@ -250,7 +250,7 @@ int find_or_insert(double key, int *degrees, int n_stations, int LB, int idle, l
    hash_index = hash_value;
    assert((0 <= hash_index) && (hash_index < HASH_SIZE));
    std::vector<int> tmp_assigned_tasks; tmp_assigned_tasks.reserve(n_tasks);
-   int * deg_copy; MALLOC(deg_copy, n_tasks + 1, int); memcpy(deg_copy, degrees, n_tasks + 1);
+   int * deg_copy; MALLOC(deg_copy, n_tasks + 1, int); memcpy(deg_copy, degrees, (n_tasks + 1) * sizeof(int));
    for (int i = 1; i <= n_tasks; ++i)
    {
 	   if (degrees[i] == -2) 
