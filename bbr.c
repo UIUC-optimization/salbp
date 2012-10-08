@@ -293,7 +293,7 @@ void testprob()
 			{
                start_time = clock();
                initialize_bfs_bbr();
-               bfs_bbr(upper_bound);
+               bfs_bbr(UB);
                free_bfs_bbr();
                if (bin_pack_lb == 1) 
 				   free_bin_packing();
