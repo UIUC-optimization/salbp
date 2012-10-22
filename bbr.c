@@ -213,6 +213,8 @@ void testprob()
       }
 	  else printf("running forward %d %d\n", f, r);
 	}
+	else if (run_forward == 1)
+		printf("running forward\n");
 	else if (run_forward == 0)
 	{
 	  printf("running in reverse\n");
@@ -221,6 +223,11 @@ void testprob()
 		  free(closed_predecessor_matrix[j]);
 	  free(closed_predecessor_matrix);
 	  close_pred();
+	}
+	else
+	{
+		printf("invalid direction %d\n", run_forward);
+		exit(-1);
 	}
 
       find_successors();
