@@ -52,6 +52,7 @@ int CPU_LIMIT = 3600;
 int* heap_sizes = NULL;
 clock_t global_start_time;
 char* root_degrees = NULL;
+int run_forward = -1;
 
 }; // end namespace salb
 
@@ -121,6 +122,9 @@ void parseargs(int ac, char **av)
 		 case 't':
 			CPU_LIMIT = atoi(av[++cnt]);
 			break;
+		 case 'd':
+			run_forward = atoi(av[++cnt]);
+			break;
          default:
             usage(*av);
             break;
@@ -142,6 +146,7 @@ void usage (char *prog)
    fprintf (stderr, "    -p: controls level of printed information (def=0)\n");
    fprintf (stderr, "    -s: seed for random number generation\n");
    fprintf (stderr, "    -t: CPU time limit\n");
+   fprintf (stderr, "    -d: Set direction (-1 = auto (default), 0 = reverse, 1 = forward)\n");
    exit (1);
 }
 
@@ -162,6 +167,8 @@ void testprob()
 
          close_pred();
 
+	if (run_forward == -1)
+	{
       std::vector<int> E(n_tasks + 1);
       std::vector<int> L(n_tasks + 1);
 
@@ -206,6 +213,16 @@ void testprob()
 		  close_pred();
       }
 	  else printf("running forward %d %d\n", f, r);
+	}
+	else if (run_forward == 0)
+	{
+	  printf("running in reverse\n");
+	  reverse_pred();
+	  for (int j = 1; j <= n_tasks; ++j)
+		  free(closed_predecessor_matrix[j]);
+	  free(closed_predecessor_matrix);
+	  close_pred();
+	}
 
       find_successors();
       //prn_successors();
