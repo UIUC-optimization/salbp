@@ -291,6 +291,8 @@ void testprob()
          n_generated = 0;
          n_states = 0;
 
+		 printf("First lower bound: %d\n", (int)ceil((double)t_sum / (double)cycle));
+
          if (ceil((double) t_sum / (double) cycle) < upper_bound) 
 		 {
             start_time = clock();
@@ -325,6 +327,7 @@ void testprob()
                bfs_bbr_cpu = (double) (clock() - start_time) / CLOCKS_PER_SEC;
             }
          }
+		 else printf("Optimality proved by LB1\n");
 
          total_cpu = (double) (clock() - search_info.start_time) / CLOCKS_PER_SEC;
 
