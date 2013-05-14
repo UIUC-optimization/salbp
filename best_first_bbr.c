@@ -94,9 +94,13 @@ void best_first_bbr(int upper_bound)
    //   root_LB = i;
    //}
    bin_pack_flag = bin_pack_lb;
-   if((bin_pack_flag == 1) && (root_LB < UB)) {
+   printf("Second lower bound %d\n", root_LB);
+
+   if((bin_pack_flag == 1) && (root_LB < UB)) 
+   {
       MALLOC(list_of_items, n_tasks+1,  short);
-      for(i = 1; i <= n_tasks; i++) {
+      for (i = 1; i <= n_tasks; i++) 
+	  {
             j = descending_order[i];
             list_of_items[i] = j;
       }
@@ -110,10 +114,11 @@ void best_first_bbr(int upper_bound)
          }
       }
       free(list_of_items);
+	   printf("Bin-packing lower bound %d\n", root_LB);
    }
-   if(root_LB < UB) {
+   if(root_LB < UB) 
       index = find_or_insert(0.0, degrees, 0, 0, 0, 0, -1, 1, &status);
-   }
+   else printf("Optimality proved by LB2 or BPLB\n");
 
    // Main loop
 
