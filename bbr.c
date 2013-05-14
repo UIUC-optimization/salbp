@@ -291,6 +291,7 @@ void testprob()
 
             if (verified_optimality == 0) 
 			{
+	       verified_optimality = 1;
                start_time = clock();
                initialize_bfs_bbr();
                bfs_bbr(UB);
