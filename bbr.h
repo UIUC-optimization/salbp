@@ -48,6 +48,7 @@ typedef struct searchinfo {
    double  bfs_bbr_cpu;			// cpu used by bfs_bbr algorithm
    double  find_insert_cpu;   // cpu used by find_or_insert
    double  bin_cpu;           // cpu used by bin packing functions
+   double  lb_cpu;	      // cpu used by lower bounding
 } searchinfo, *search_infopnt;
 
 typedef struct state {

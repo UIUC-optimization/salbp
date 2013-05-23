@@ -276,6 +276,7 @@ void testprob()
          UB = min_n_stations;
          free_hoffman();
          hoffman_cpu = (double) (clock() - start_time) / CLOCKS_PER_SEC;
+	 printf("MHH upper bound: %d\n", UB);
 
          compute_LB2_values();
          compute_LB3_values();
@@ -286,6 +287,7 @@ void testprob()
          n_states = 0;
 
 		 printf("First lower bound: %d\n", (int)ceil((double)t_sum / (double)cycle));
+	global_start_time = clock();
 
          if (ceil((double) t_sum / (double) cycle) < upper_bound) 
 		 {
