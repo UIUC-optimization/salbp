@@ -189,16 +189,17 @@ int bin_dfs_bbr(short *list_of_items)
 
    z = dfs_bbr(1, remaining_items, bin_hash_value, sum(sizes, remaining_items), 
                sum_double(LB2_values, remaining_items), sum_double(LB3_values, remaining_items), &index);
-   if(bin_status == 0) {
-      if(z > 0) {
+   if (bin_status == 0 && index >= 0) 
+   {
+      if (z > 0) 
+      {
          z_backtrack = bin_backtrack2(index);
          assert(z_backtrack == z);
       }
       z += n_preprocessed_bins;
       //prn_dfs_bbr_info(list_of_items, 0, -1, z);
-   } else {
-      z = -1;
-   }
+   } 
+   else { z = -1; }
 
    search_info.bin_cpu += (double) (clock() - start_time) / CLOCKS_PER_SEC;
 
@@ -537,6 +538,8 @@ int bin_backtrack2(int index)
    int      /*parent_index,*/ s, *sizes_in_child, *sizes_in_parent, *solution;
    short    *items, *remaining_items;
 
+   if (0 > index || index >= BIN_HASH_SIZE)
+	printf("ding!\n");
    assert((0 <= index) && (index < BIN_HASH_SIZE));
 
    MALLOC(solution, n_items+1, int);
