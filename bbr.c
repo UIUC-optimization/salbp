@@ -276,7 +276,7 @@ void testprob()
          UB = min_n_stations;
          free_hoffman();
          hoffman_cpu = (double) (clock() - start_time) / CLOCKS_PER_SEC;
-	 printf("MHH upper bound: %d\n", UB);
+	 printf("MHH upper bound: %d (%0.2fs)\n", UB, hoffman_cpu);
 
          compute_LB2_values();
          compute_LB3_values();
