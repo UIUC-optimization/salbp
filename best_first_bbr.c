@@ -67,6 +67,7 @@ void best_first_bbr(int upper_bound)
 
    // Add the root problem to the hash table and the list of states.
 
+   double lb_cpu_start = clock();
    t_sum = 0;
    for (i = 1; i <= n_tasks; i++) 
    {
@@ -90,6 +91,7 @@ void best_first_bbr(int upper_bound)
    LB3 = ceil(LB3);
    if(LB2 > root_LB) root_LB = (int) LB2;
    if(LB3 > root_LB) root_LB = (int) LB3;
+   search_info.lb_cpu += (double) (clock() - lb_cpu_start);
    // LB3b works correctly.  If it is used, then 6 additional Wee-Mag problems (c = 45, 46, 49, 50, 52, 54)
    // can be solved without using the bin packing LB. 8/13/09.
    //i = LB3b();
@@ -121,6 +123,8 @@ void best_first_bbr(int upper_bound)
       index = find_or_insert(0.0, degrees, 0, 0, 0, 0, -1, 1, &status);
    else printf("Optimality proved by LB2 or BPLB\n");
 
+   printf("lower bound time: %0.2fs\n", search_info.lb_cpu / CLOCKS_PER_SEC);
+   printf("bin packing time: %0.2fs\n", search_info.bin_cpu / CLOCKS_PER_SEC);
    // Main loop
 
    //printf("maximum idle time = %d\n", cycle*(UB-1) - t_sum);

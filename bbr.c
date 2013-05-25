@@ -293,6 +293,7 @@ void testprob()
          n_states = 0;
 
 		 printf("First lower bound: %d\n", (int)ceil((double)t_sum / (double)cycle));
+	global_start_time = clock();
 
          if (ceil((double) t_sum / (double) cycle) < upper_bound) 
 		 {
