@@ -34,6 +34,7 @@ void read_problem(const char *f)
 	while (getline(input, line))
 	{ 
 		if (line[0] == '<' || line == "\r") continue;
+		stringstream(line) >> cycle;
 		break; 
 	}
 	while (getline(input, line))
