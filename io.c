@@ -37,11 +37,11 @@ void read_problem(const char *f)
 		stringstream(line) >> cycle;
 		break; 
 	}
-	while (getline(input, line))
+/*	while (getline(input, line))
 	{ 
 		if (line[0] == '<' || line == "\r") continue;
 		break; 
-	}
+	}*/
 
    MALLOC(t,n_tasks+1,int);
    t[0] = n_tasks;
@@ -83,6 +83,9 @@ void read_problem(const char *f)
    MALLOC(hash_values, n_tasks+1, int);
    for (i = 1; i <= n_tasks; i++) 
       hash_values[i] = randomi(HASH_SIZE, &seed) - 1;
+
+   for (i = 1; i <= n_tasks; ++i)
+	   printf("h[%d] = %d\n", i, hash_values[i]);
 
 }
 

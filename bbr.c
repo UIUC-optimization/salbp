@@ -1,4 +1,5 @@
 #include "bbr.h"
+#include <cstdint>
 
 /*
    The overall algorithm consists of three phases.
@@ -68,6 +69,8 @@ int main(int ac, char **av)
    salb::search_info.best_first_cpu = 0.0;
    salb::search_info.bfs_bbr_cpu = 0.0;
    salb::search_info.find_insert_cpu = 0.0;
+   printf("%d %d", sizeof(unsigned long), sizeof(std::int64_t));
+   exit(0);
 
    current_time = time(NULL);
    
@@ -185,12 +188,12 @@ void testprob()
           L[j] = ceil(rtime/cycle);
       }
 
-      int f = 1;
-      int r = 1;
+      unsigned int f = 1;
+      unsigned int r = 1;
       for (int m = 1; m <= 5; ++m)
       {
-          int fcount = 0;
-          int rcount = 0;
+          unsigned int fcount = 0;
+          unsigned int rcount = 0;
           for (int j = 1; j <= n_tasks; ++j)
           {
               if (E[j] <= m) ++fcount;
@@ -203,14 +206,14 @@ void testprob()
 
       if (r < f)
       {
-          printf("running in reverse %d %d\n", f, r);
+          printf("running in reverse %u %u\n", f, r);
           reverse_pred();
 		  for (int j = 1; j <= n_tasks; ++j)
 			  free(closed_predecessor_matrix[j]);
 		  free(closed_predecessor_matrix);
 		  close_pred();
       }
-	  else printf("running forward %d %d\n", f, r);
+	  else printf("running forward %u u\n", f, r);
 	}
 	else if (run_forward == 0)
 	{
