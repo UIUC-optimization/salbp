@@ -162,7 +162,6 @@ void testprob()
 
    sum = 0;
       read_problem(prob_file);
-      cycle = 1000;
 
          close_pred();
 
@@ -253,7 +252,6 @@ void testprob()
 	  MALLOC(states, STATE_SPACE+1, state);
 
          search_info.start_time = clock();
-         cycle = 1000;
 
          // Use Hoffman type heuristic to find a reasonably good upper bound.
 

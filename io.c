@@ -34,13 +34,14 @@ void read_problem(const char *f)
 	while (getline(input, line))
 	{ 
 		if (line[0] == '<' || line == "\r") continue;
+		stringstream(line) >> cycle;
 		break; 
 	}
-	while (getline(input, line))
+/*	while (getline(input, line))
 	{ 
 		if (line[0] == '<' || line == "\r") continue;
 		break; 
-	}
+	}*/
 
    MALLOC(t,n_tasks+1,int);
    t[0] = n_tasks;
