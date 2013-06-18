@@ -4,7 +4,8 @@
 #include  <assert.h>
 #include  <math.h>
 #include  <memory.h>
-#include <vector>
+#include  <vector>
+#include  <string>
 
 namespace salb
 {
@@ -26,9 +27,12 @@ namespace salb
 #define  MAX_N_TASKS 500
 #define  BIG_INT 2147483647
 #define  STATE_SPACE  60000000 /* allocate space for this many states  */
-#define  HASH_SIZE 600000001 // Must be a prime number.  Currently using linear
+#define  HASH_SIZE    600000007 // Must be a prime number.  Currently using linear
+//#define  STATE_SPACE  20000000 /* allocate space for this many states  */
+//#define  HASH_SIZE    193877777 // Must be a prime number.  Currently using linear
                             // probing, but if quadratic probing is used, then
                             // it must be a prime of the form 4j+3.  20000003=4*5000000+3   40000003=4*10000000+3
+//#define  HASH_SIZE    200000033 // is also prime
 //#define  HEAP_SIZE 30000000   // Maximum number of elements in a heap.
 
 
@@ -106,6 +110,7 @@ extern   heap_record *bfs_heap;
 extern   int      cycle;                  // Cycle time for the stations
 extern   int      n_tasks;                // number of tasks
 extern   int      UB;                     // upper bound on the number of stations needed
+extern   int      *optimalsolution;	     // optimal assignment of tasks to stations, optimalsolution[i]=index of station where i is assigned to
 extern   char     **predecessor_matrix;   // predecessor_matrix(i,j) = 1 indicates that i immediately precedes j.
 extern   char     **closed_predecessor_matrix;   // closed_predecessor_matrix(i,j) = 1 indicates that i precedes j.
 extern   char     **potentially_dominates;// potentially_dominates[i][j] = 1 if task i potentially dominates task j.
@@ -132,6 +137,7 @@ extern   int      bin_pack_lb; // -b option: 1 = use bin packing LB, 0 = do not 
 extern   int      search_strategy;  /* -m option: search_strategy during Phase II                       
                                        1 = distributed best first search
                                        2 = best first search */
+extern	 int      reverse;		//added by AS 2013/06/06
 extern   int      prn_info;    // -p option: controls level of printed info
 extern   double   seed;        // -s option: seed for random number generation
 extern	 int CPU_LIMIT;
@@ -175,6 +181,8 @@ void prn_load(int depth);
 // Functions in io.c
 
 void read_problem(const char *f);
+void write_solution(char *f);				//added by AS 2013/06/06
+void write_results(char *f, double cpu);	//added by AS 2013/06/06
 void prn_problem();
 void prn_tasks(short *tasks, int n);
 void prn_pred(char **predecessor_matrix);

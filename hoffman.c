@@ -223,7 +223,19 @@ int check_stations(char *deg, short *stations, int *start_station, int n_station
       sum = 0;
       for(ii = start_station[station]; ii < start_station[station+1]; ii++) {
          i = stations[ii];
-         assigned[i]++;
+
+		 //added by AS 2013/06/06
+		 if (reverse==1) {
+  			if (optimalsolution[0]>n_stations) {
+				optimalsolution[n_tasks+1-i]=n_stations+1-station;
+			}
+		 } else {
+			if (optimalsolution[0]>n_stations) {
+				optimalsolution[i]=station;
+			}
+		 }
+
+		 assigned[i]++;
          sum += t[i];
       }
       if(sum > cycle) {
@@ -241,6 +253,11 @@ int check_stations(char *deg, short *stations, int *start_station, int n_station
          }
       }
 
+   }
+
+   //added by AS 2013/06/06
+   if (optimalsolution[0]>n_stations) {
+		optimalsolution[0]=n_stations;
    }
 
    for(i = 1; i <= n_tasks; i++) {
