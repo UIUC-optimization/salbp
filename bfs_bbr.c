@@ -147,7 +147,7 @@ void gen_loads(int depth, int remaining_time, int start, int n_eligible)
 {
    int     LB;
    int      full_load, i, ii, j, jj, LB1, LB2, LB3, LB_bin, n, n_sub_eligible, status, stop, sub_idle, sub_remaining_time, t_unassigned;
-   unsigned long sub_hash_value;
+   std::uint64_t sub_hash_value;    //changed by AS 2013/06/06
    int    *list_of_items;
    double   LB2_unassigned, LB3_unassigned;
 
@@ -448,7 +448,7 @@ int check_state(int index)
 {
    int     degree;
    int      i, /*idle,*/ j, jj, stop, t_assigned;
-   std::int64_t   hash_value;
+   std::uint64_t   hash_value;
 
    backtrackinfo* state_info = get_state_info(index);
 

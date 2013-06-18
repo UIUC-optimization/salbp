@@ -206,7 +206,7 @@ void gen_loads2(int depth, int remaining_time, int start, int n_eligible)
 {
    int     LB;
    int      full_load, i, ii, j, jj, LB1, LB2, LB3, LB_bin, n_sub_eligible, n, n_unassigned, status, stop, sub_idle, sub_remaining_time, t_unassigned;
-   std::int64_t sub_hash_value;    //changed by AS 2013/06/06
+   std::uint64_t sub_hash_value;    //changed by AS 2013/06/06
    int    *list_of_items;
    double   cpu, key, LB2_unassigned, LB3_unassigned;
 
