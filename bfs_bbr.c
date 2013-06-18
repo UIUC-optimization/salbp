@@ -40,7 +40,7 @@ void free_bfs_bbr()
 void bfs_bbr(int upper_bound)
 /*
    1. This function uses breadth first search (BFS) branch bound and remember (BBR) to find an optimal solution
-      for the simple assembly line balancing problem.
+	  for the simple assembly line balancing problem.
    2. upper_bound = upper bound on the number of stations needed.  Search for a solution with fewer than upper_bound stations.
    3. Written 3/3/06.
 */
@@ -61,12 +61,12 @@ void bfs_bbr(int upper_bound)
 
    t_sum = 0;
    for(i = 1; i <= n_tasks; i++) {
-      count = 0;
-      t_sum += t[i];
-      for(j = 1; j <= n_tasks; j++) {
-         if(predecessor_matrix[j][i] == 1) count++;
-      }
-      degrees[i] = count;
+	  count = 0;
+	  t_sum += t[i];
+	  for(j = 1; j <= n_tasks; j++) {
+		 if(predecessor_matrix[j][i] == 1) count++;
+	  }
+	  degrees[i] = count;
    }
    LB1 = (int) ceil((double) t_sum / (double) cycle);
    if(LB1 < UB) {
@@ -193,14 +193,14 @@ void gen_loads(int depth, int remaining_time, int start, int n_eligible)
 
    if(full_load == 1) {
 
-      // If there are no tasks assigned to this station, then return.
+	  // If there are no tasks assigned to this station, then return.
 
-      if(depth == 1) return;
+	  if(depth == 1) return;
 
-      //prn_load(depth);
+	  //prn_load(depth);
 
-      // Ignore this load if it can be pruned by a simple lower bound.
-      // Ignore this load if another task can be added.
+	  // Ignore this load if it can be pruned by a simple lower bound.
+	  // Ignore this load if another task can be added.
    
       search_info.n_generated++;
       t_unassigned = 0;
@@ -245,52 +245,52 @@ void gen_loads(int depth, int remaining_time, int start, int n_eligible)
       //    This reduced the number of branches, but increased the number of states stored,
       //    so I changed it back.
    
-      for(i = 1; i <= n_tasks; i++) {
-         if(degrees[i] == 0) {
-            for(jj = 1; jj <= depth-1; jj++) {
-               j = tasks[jj];
-               if((potentially_dominates[i][j] == 1) && (t[i] - t[j] <= remaining_time)) {
-                  //sub_idle = idle + remaining_time;
-                  //sub_hash_value = hash_value;
-                  //for(i = 1; i <= depth-1; i++) sub_hash_value += hash_values[tasks[i]];
-                  //sub_hash_value = sub_hash_value % HASH_SIZE;
-                  //index = find_or_insert(0.0, degrees, station, LB, sub_idle, sub_hash_value, previous, 0, &status);
-                  //if(status != 1) {
-                  //   states[index].open = 0;
-                  //}
-                  return;
-               }
-            }
-         }
-      }
+	  for(i = 1; i <= n_tasks; i++) {
+		 if(degrees[i] == 0) {
+			for(jj = 1; jj <= depth-1; jj++) {
+			   j = tasks[jj];
+			   if((potentially_dominates[i][j] == 1) && (t[i] - t[j] <= remaining_time)) {
+				  //sub_idle = idle + remaining_time;
+				  //sub_hash_value = hash_value;
+				  //for(i = 1; i <= depth-1; i++) sub_hash_value += hash_values[tasks[i]];
+				  //sub_hash_value = sub_hash_value % HASH_SIZE;
+				  //index = find_or_insert(0.0, degrees, station, LB, sub_idle, sub_hash_value, previous, 0, &status);
+				  //if(status != 1) {
+				  //   states[index].open = 0;
+				  //}
+				  return;
+			   }
+			}
+		 }
+	  }
 
-      // Check if there exists a task in the station that has a successor.
-      // Note: This code is not complete.  Before the load can be pruned, must also check that at least
-      // one unassigned task has a successor.
-      // Modified 5/21/09.  Do not return immediately.  Call find_or_insert first, and then set the open
-      //    status to 0 if the state was not strictly dominated.
-      //    This reduced the number of branches, but increased the number of states stored,
-      //    so I changed it back.
+	  // Check if there exists a task in the station that has a successor.
+	  // Note: This code is not complete.  Before the load can be pruned, must also check that at least
+	  // one unassigned task has a successor.
+	  // Modified 5/21/09.  Do not return immediately.  Call find_or_insert first, and then set the open
+	  //    status to 0 if the state was not strictly dominated.
+	  //    This reduced the number of branches, but increased the number of states stored,
+	  //    so I changed it back.
 
-      ii = 0;
-      for(jj = 1; jj <= depth-1; jj++) {
-         j = tasks[jj];
-         if(successors[j][0] > 0) {
-            ii = 1;
-            break;
-         }
-      }
-      if(ii == 0) {
-         for(i = 1; i <= n_tasks; i++) {
-            if(degrees[i] >= 0) {
-               if(successors[i][0] > 0) {
-                  ii = 1;
-                  break;
-               }
-            }
-         }
-         if(ii == 1) return;
-      }
+	  ii = 0;
+	  for(jj = 1; jj <= depth-1; jj++) {
+		 j = tasks[jj];
+		 if(successors[j][0] > 0) {
+			ii = 1;
+			break;
+		 }
+	  }
+	  if(ii == 0) {
+		 for(i = 1; i <= n_tasks; i++) {
+			if(degrees[i] >= 0) {
+			   if(successors[i][0] > 0) {
+				  ii = 1;
+				  break;
+			   }
+			}
+		 }
+		 if(ii == 1) return;
+	  }
  
       sub_idle = idle + remaining_time;
       sub_hash_value = hash_value;
@@ -340,7 +340,7 @@ void backtrack(int index)
    1. This routine constructs a solution by backtracking through the states.
    2. index = index of the state (in states) from which to begin backtracking.
    3. This routine does not return the solution.  It creates it, calls check_solution to
-      check it, and then deletes it.
+	  check it, and then deletes it.
    4. Written 4/19/06.
 */
 {
@@ -352,14 +352,14 @@ void backtrack(int index)
    n_stations = states[index].n_stations;
    previous = states[index].previous;
    while(previous >= 0) {
-      m = states[index].n_stations;
-      for(i = 1; i <= n_tasks; i++) {
-         if((states[index].degrees[i] == -1) && (states[previous].degrees[i] >= 0)) {
-            stations[i] = m;
-         }
-      }
-      index = previous;
-      previous = states[index].previous;
+	  m = states[index].n_stations;
+	  for(i = 1; i <= n_tasks; i++) {
+		 if((states[index].degrees[i] == -1) && (states[previous].degrees[i] >= 0)) {
+			stations[i] = m;
+		 }
+	  }
+	  index = previous;
+	  previous = states[index].previous;
    }
 
    i = check_solution(stations, n_stations);
@@ -376,36 +376,59 @@ int check_solution(int *stations, int n_stations)
    2. stations[i] = station to which task i is assigned.
    3. n_stations = number of stations used by stations.
    4. 1 is returned if everything is OK,
-      0 is returned o.w.
+	  0 is returned o.w.
    5. Written 4/19/06.
 */
 {
-   int      *cycle_times, i, j, jj, m, stop;
+	int      *cycle_times, i, j, jj, m, stop;
 
    assert((1 <= n_stations) && (n_stations <= n_tasks));
+   //printf("Solution with %d stations\n", n_stations);
 
    MALLOC(cycle_times, n_tasks+1, int);
    for(m = 1; m <= n_stations; m++) cycle_times[m] = 0;
 
    for(i = 1; i <= n_tasks; i++) {
-      m = stations[i];
-      assert((1 <= m) && (m <= n_stations));
-      cycle_times[m] += t[i];
-      stop = successors[i][0];
-      for(jj = 1; jj <= stop; jj++) {
-         j = successors[i][jj];
-         if(stations[j] < stations[i]) {
-            printf("Successor of %d assigned to an earlier station\n", i);
-            return(0);
-         }
-      }
+	  m = stations[i];
+
+	//added by AS 2013/06/06
+	  if (reverse==1) {
+  		if (optimalsolution[0]>=n_stations) {
+			optimalsolution[n_tasks+1-i]=n_stations+1-m;
+		}
+	  } else {
+  		if (optimalsolution[0]>=n_stations) {
+			optimalsolution[i]=m;
+		}
+	  }
+	  //printf("%d\t%d\n", i, m);
+
+	  assert((1 <= m) && (m <= n_stations));
+	  cycle_times[m] += t[i];
+	  stop = successors[i][0];
+      printf("Successors of task %d with time %d:", i, t[i]);
+	  for(jj = 1; jj <= stop; jj++) {
+		 j = successors[i][jj];
+         printf("%d ", j);
+		 if(stations[j] < stations[i]) {
+			printf("Successor of %d assigned to an earlier station\n", i);
+			return(0);
+		 }
+	  }
+      printf("\n");
    }
 
+	//added by AS 2013/06/06
+   if (optimalsolution[0]>=n_stations) {
+		optimalsolution[0]=n_stations;
+   }
+
+
    for(m = 1; m <= n_stations; m++) {
-      if(cycle_times[m] > cycle) {
-         printf("cycle time is violated\n");
-         return(0);
-      }         
+	  if(cycle_times[m] > cycle) {
+		 printf("cycle time is violated\n");
+		 return(0);
+	  }         
    }
  
    free(cycle_times);
@@ -419,7 +442,7 @@ int check_state(int index)
    1. This routine performs several simple checks on the data contained in a state.
    2. index = index of the state (in states) to be checked.
    3. 1 is returned if everything is OK,
-      0 is returned o.w.
+	  0 is returned o.w.
    4. Written 3/21/06.
 */
 {

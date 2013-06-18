@@ -1,4 +1,5 @@
 #include "bbr.h"
+#include <cstdint>
 
 namespace salb
 {
@@ -40,11 +41,11 @@ void free_best_first_bbr()
 void best_first_bbr(int upper_bound)
 /*
    1. This function uses best first search branch bound and remember (BBR) to find an optimal solution
-      for the simple assembly line balancing problem.
+	  for the simple assembly line balancing problem.
    2. upper_bound = upper bound on the number of stations needed.  Search for a solution with fewer than upper_bound stations.
    3. Written 3/23/06.
    4. Note: Currently, this is not implemented quite right.  If a state dominates an existing state, then the state is replaced.
-      But if that state has already been processed, then the new state will not be processed.
+	  But if that state has already been processed, then the new state will not be processed.
 */
 {
    int      count, root_LB, i, j, index, n_eligible, n_unassigned, status, t_sum;
@@ -56,8 +57,8 @@ void best_first_bbr(int upper_bound)
 
    UB = upper_bound;
    verified_optimality = 1;   // verified_optimality = 1 (0) if the best_first_bbr proved optimality
-                              // This occurs if the maximum number of states was not exceeded,
-                              // none of the heaps were filled, and the maximum_n_full_loads was not exceeded.
+							  // This occurs if the maximum number of states was not exceeded,
+							  // none of the heaps were filled, and the maximum_n_full_loads was not exceeded.
 
    initialize_hash_table();
    initialize_states();
@@ -141,6 +142,7 @@ void best_first_bbr(int upper_bound)
 		   verified_optimality = 0;;
 		   break;
 		}
+
       if(state_space_exceeded == 1) 
 	  {
          verified_optimality = 0;
@@ -204,7 +206,7 @@ void gen_loads2(int depth, int remaining_time, int start, int n_eligible)
 {
    int     LB;
    int      full_load, i, ii, j, jj, LB1, LB2, LB3, LB_bin, n_sub_eligible, n, n_unassigned, status, stop, sub_idle, sub_remaining_time, t_unassigned;
-   unsigned long sub_hash_value;
+   std::int64_t sub_hash_value;    //changed by AS 2013/06/06
    int    *list_of_items;
    double   cpu, key, LB2_unassigned, LB3_unassigned;
 
@@ -255,16 +257,16 @@ void gen_loads2(int depth, int remaining_time, int start, int n_eligible)
 
    if(full_load == 1) {
 
-      n_full_loads++;
+	  n_full_loads++;
 
-      // If there are no tasks assigned to this station, then return.
+	  // If there are no tasks assigned to this station, then return.
 
-      if(depth == 1) return;
+	  if(depth == 1) return;
 
-      //prn_load(depth);
+	  //prn_load(depth);
 
-      // Ignore this load if it can be pruned by a simple lower bound.
-      // Ignore this load if another task can be added.
+	  // Ignore this load if it can be pruned by a simple lower bound.
+	  // Ignore this load if another task can be added.
    
       search_info.n_generated++;
       n_unassigned = 0;
